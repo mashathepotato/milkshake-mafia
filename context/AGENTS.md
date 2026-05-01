@@ -1,36 +1,31 @@
 <INSTRUCTIONS>
-## Project: The Taste Engine (Hackathon 2026)
-Build an autonomous “Taste Engine” that ranks the subjective quality of web UIs and visualizes it as a **Virtual Milkshake**.
+## The Taste Engine (Hackathon 2026)
+Goal: quantify the subjective “quality” of web UIs and render it as a tangible visual metaphor: a **Virtual Milkshake**.
 
-### Core idea
-- Convert a website screenshot (“vibe”) → embedding vector → PCA-derived axes → “ingredients” JSON → animated milkshake visualization.
-- Ratings are **relative**, anchored by baseline examples of “Good (Senior)” vs “Bad (Gunk)”.
+This repo is built around a 3-tier pipeline, designed so different people (and their coding agents) can implement each tier independently.
 
-## 3-tier pipeline
-### 1) Photographer (Visual Encoder)
-- Input: target URL(s)
-- Output: screenshot + high-dimensional embedding (e.g., CLIP / DINOv2)
+### Quick map
+- **Photographer**: URL → screenshot + embedding
+- **Sommelier**: embedding → principal components → Ingredients JSON (+ debug)
+- **Barista**: Ingredients JSON → real-time milkshake visualization
 
-### 2) Sommelier (Logic & Mapping)
-- Runs PCA vs. baseline dataset
-- Maps principal components:
-  - `PC1` (Order/Complexity) → texture/viscosity
-  - `PC2` (Harmony/Vibrancy) → flavor profile
-  - `PC3` (Modernity/Debt) → freshness/aftertaste
-- Output: Ingredients JSON, e.g.
-  - `{ "base": "strawberry", "texture": "smooth", "inclusions": ["mint","sparkles"], "viscosity": 0.8 }`
+Read these docs before starting work on a tier:
+- `context/ARCHITECTURE.md` (system flow + boundaries)
+- `context/DATA_CONTRACTS.md` (the interfaces; treat as source of truth)
+- `context/ROLE_PHOTOGRAPHER.md`, `context/ROLE_SOMMELIER.md`, `context/ROLE_BARISTA.md` (ownership + DoD)
+- `context/AGENT_PROMPTS.md` (copy/paste prompts for setting up a coding agent)
+- `context/VOCAB.md` (canonical strings for flavors/textures/assets)
 
-### 3) Barista (Visualizer)
-- Consumes Ingredients JSON (no scoring logic)
-- Renders high-fidelity milkshake with shaders/assets/physics (pouring/blending, toppings, flow)
+## Project principles
+- **Relativity over absolutes**: scores are only meaningful relative to the baseline “Gold (Senior)” vs “Gunk (Bad)” poles.
+- **Hard separation of concerns**:
+  - Photographer does ingestion + vectorization only.
+  - Sommelier does math + mapping only.
+  - Barista does visuals only (no scoring logic).
+- **Demo-first**: prefer an end-to-end path that works on 3–10 example URLs, even if “smart” parts are v0.
 
-## KPIs
-- Tangibility: make “design quality” feel testable/usable
-- Relativity: always relative to the “Gold/Gunk” spectrum
-- Presentation hook: real-time transformation from screenshot → visceral liquid representation
-
-## Repo conventions (for now)
-- Keep project/product context in `context/`
-- Prefer small, composable modules per tier (Photographer/Sommelier/Barista)
-- Default to simple, demo-first implementations; optimize later
+## Non-goals (hackathon scope)
+- Perfect “objective” UI taste.
+- Production-grade crawling, auth, or bot evasion.
+- Large-scale dataset management.
 </INSTRUCTIONS>
