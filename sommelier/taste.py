@@ -1,6 +1,8 @@
 import math
 
-from .linalg import clamp, clamp01, dot, l2_normalize, mean, scale, sub
+from .axes import discover_axes
+from .ingredients import build_ingredients, fallback_ingredients
+from .linalg import clamp, clamp01, dot, l2_norm, l2_normalize, mean, scale, sub
 from .pca import PCAFit, fit_pca, max_abs_sign_fix, project
 
 
@@ -98,6 +100,90 @@ def _cosine_sim(a, b) -> float:
     return clamp(dot(a, b), -1.0, 1.0)
 
 
+def _project_target(*, target_embedding, baseline_items, pca_components: int = 3):
+    """Project target into PC space; return everything downstream stages need.
+
+    Returns
+    -------
+    dict with: ``pcs`` (normalized [-1,1] floats), ``axes`` (discovered axis-name
+    dicts), ``nearest_anchor`` (baseline item closest to target), ``confidence``,
+    ``baseline_vectors``, ``labels``.
+    """
+    labels = []
+    baseline_vectors = []
+    items_clean = []
+    for item in baseline_items:
+        emb = item.get("embedding")
+        if not isinstance(emb, list) or not emb:
+            raise ValueError("Each baseline item must include a non-empty embedding[]")
+        labels.append(str(item.get("label", "")).strip().lower())
+        baseline_vectors.append([float(x) for x in emb])
+        items_clean.append(item)
+
+    d = len(baseline_vectors[0])
+    if len(target_embedding) != d:
+        raise ValueError(
+            f"Target embedding_dim={len(target_embedding)} does not match "
+            f"baseline embedding_dim={d}"
+        )
+
+    gold_vecs = [v for v, lab in zip(baseline_vectors, labels) if lab == "gold"]
+    gunk_vecs = [v for v, lab in zip(baseline_vectors, labels) if lab == "gunk"]
+    if not gold_vecs or not gunk_vecs:
+        raise ValueError("Baseline must include at least 1 gold and 1 gunk item")
+
+    mu_gold = mean(gold_vecs)
+    mu_gunk = mean(gunk_vecs)
+    d_gold_gunk = sub(mu_gold, mu_gunk)
+
+    pca = fit_pca(baseline_vectors, n_components=int(pca_components))
+    pcs = [max_abs_sign_fix(pc) for pc in pca.components]
+    pcs, eigenvalues = _pick_quality_order(pcs, pca.eigenvalues, d_gold_gunk)
+
+    centered_baseline = [sub(v, pca.mean) for v in baseline_vectors]
+    pcs = _orient_pc1(pcs, centered_baseline, labels)
+
+    pca = PCAFit(mean=pca.mean, components=pcs, eigenvalues=eigenvalues or pca.eigenvalues)
+
+    baseline_scores = [[dot(x, pc) for x in centered_baseline] for pc in pca.components]
+
+    raw_scores = project(pca, target_embedding)
+    norm_scores = [
+        _normalize_pc(s, baseline_scores[i]) if i < len(baseline_scores) else 0.0
+        for i, s in enumerate(raw_scores)
+    ]
+
+    axes = discover_axes(items_clean, baseline_scores, k=3)
+
+    # Nearest anchor in raw embedding space — wasabi included so the anchor pool
+    # represents every "flavor" the curator catalogued.
+    nearest_idx = -1
+    nearest_dist = math.inf
+    pairwise = []
+    for i, v in enumerate(baseline_vectors):
+        diff = sub(target_embedding, v)
+        dist = math.sqrt(dot(diff, diff))
+        if dist < nearest_dist:
+            nearest_dist = dist
+            nearest_idx = i
+        for j in range(i + 1, len(baseline_vectors)):
+            d2 = sub(baseline_vectors[i], baseline_vectors[j])
+            pairwise.append(math.sqrt(dot(d2, d2)))
+    pairwise.sort()
+    median_pair = pairwise[len(pairwise) // 2] if pairwise else 1.0
+    confidence = clamp01(1.0 - (nearest_dist / median_pair if median_pair > 0 else 1.0))
+    nearest_anchor = items_clean[nearest_idx] if nearest_idx >= 0 else None
+
+    return {
+        "pcs": norm_scores[:3] + [0.0] * (3 - len(norm_scores[:3])),
+        "axes": axes,
+        "nearest_anchor": nearest_anchor,
+        "confidence": confidence,
+        "mu_gold": mu_gold,
+        "mu_gunk": mu_gunk,
+    }
+
+
 def _recipe_from_scores(pc1: float, pc2: float, pc3: float, *, seniority: float, expiration: float):
     # Base flavor (quality axis, with small style-driven variation).
     if pc1 >= 0.0:
@@ -157,65 +243,18 @@ def _recipe_from_scores(pc1: float, pc2: float, pc3: float, *, seniority: float,
 
 
 def taste_from_embeddings(*, target_embedding, baseline_items, normalized: bool, pca_components: int = 3):
-    if not baseline_items:
-        raise ValueError("baseline_items is required")
-
-    labels = []
-    baseline_vectors = []
-    for item in baseline_items:
-        emb = item.get("embedding")
-        if not isinstance(emb, list) or not emb:
-            raise ValueError("Each baseline item must include a non-empty embedding[]")
-        labels.append(str(item.get("label", "")).strip().lower())
-        baseline_vectors.append([float(x) for x in emb])
-
-    d = len(baseline_vectors[0])
-    if len(target_embedding) != d:
-        raise ValueError(f"Target embedding_dim={len(target_embedding)} does not match baseline embedding_dim={d}")
-
-    gold_vecs = [v for v, lab in zip(baseline_vectors, labels) if lab == "gold"]
-    gunk_vecs = [v for v, lab in zip(baseline_vectors, labels) if lab == "gunk"]
-    if not gold_vecs or not gunk_vecs:
-        raise ValueError("Baseline must include at least 1 gold and 1 gunk item")
-
-    mu_gold = mean(gold_vecs)
-    mu_gunk = mean(gunk_vecs)
-    d_gold_gunk = sub(mu_gold, mu_gunk)
-
-    pca = fit_pca(baseline_vectors, n_components=int(pca_components))
-    pcs = [max_abs_sign_fix(pc) for pc in pca.components]
-    pcs, eigenvalues = _pick_quality_order(pcs, pca.eigenvalues, d_gold_gunk)
-
-    centered_baseline = [sub(v, pca.mean) for v in baseline_vectors]
-    pcs = _orient_pc1(pcs, centered_baseline, labels)
-
-    # Rebuild PCA fit with reordered/oriented components.
-    pca = PCAFit(mean=pca.mean, components=pcs, eigenvalues=eigenvalues or pca.eigenvalues)
-
-    baseline_scores = []
-    for pc in pca.components:
-        baseline_scores.append([dot(x, pc) for x in centered_baseline])
-
-    raw_scores = project(pca, target_embedding)
-    norm_scores = [
-        _normalize_pc(s, baseline_scores[i]) if i < len(baseline_scores) else 0.0
-        for i, s in enumerate(raw_scores)
-    ]
-    pc1 = norm_scores[0] if len(norm_scores) > 0 else 0.0
-    pc2 = norm_scores[1] if len(norm_scores) > 1 else 0.0
-    pc3 = norm_scores[2] if len(norm_scores) > 2 else 0.0
-
-    # Pole distances expressed as [0,1] "closeness" scores for interpretability.
-    if normalized:
-        v = target_embedding
-    else:
-        v = l2_normalize(target_embedding)
-
-    gold_sim = _cosine_sim(v, mu_gold)
-    gunk_sim = _cosine_sim(v, mu_gunk)
+    """Legacy ad-hoc recipe schema (kept for back-compat with existing demo callers)."""
+    proj = _project_target(
+        target_embedding=target_embedding,
+        baseline_items=baseline_items,
+        pca_components=pca_components,
+    )
+    pc1, pc2, pc3 = proj["pcs"]
+    v = target_embedding if normalized else l2_normalize(target_embedding)
+    gold_sim = _cosine_sim(v, proj["mu_gold"])
+    gunk_sim = _cosine_sim(v, proj["mu_gunk"])
     seniority = (1.0 + gold_sim) / 2.0
     expiration = (1.0 + gunk_sim) / 2.0
-
     return _recipe_from_scores(pc1, pc2, pc3, seniority=seniority, expiration=expiration)
 
 
@@ -236,5 +275,81 @@ def taste_from_taste_request(payload: dict):
         target_embedding=[float(x) for x in target_embedding],
         baseline_items=baseline_items,
         normalized=normalized,
+        pca_components=int((payload.get("pca") or {}).get("n_components", 3)),
+    )
+
+
+def ingredients_from_embeddings(
+    *,
+    target_embedding,
+    baseline_items,
+    request_id: str = "demo",
+    url: str = "",
+    baseline_id: str = "cellar-urls-v0",
+    model_id: str = "dummy",
+    pca_components: int = 3,
+):
+    """Canonical ``Ingredients`` per context/DATA_CONTRACTS.md."""
+    proj = _project_target(
+        target_embedding=target_embedding,
+        baseline_items=baseline_items,
+        pca_components=pca_components,
+    )
+    return build_ingredients(
+        request_id=request_id,
+        url=url,
+        pcs=proj["pcs"],
+        axes=proj["axes"],
+        nearest_anchor=proj["nearest_anchor"],
+        confidence=proj["confidence"],
+        baseline_id=baseline_id,
+        model_id=model_id,
+    )
+
+
+def ingredients_from_taste_request(payload: dict):
+    target = payload.get("target_embedding") or {}
+    baseline = (payload.get("baseline") or {})
+
+    request_id = str(payload.get("request_id", "unknown"))
+    url = str(target.get("url", ""))
+    baseline_id = str(baseline.get("baseline_id", "cellar-urls-v0"))
+    model_id = str(target.get("model_id", baseline.get("model_id", "dummy")))
+
+    target_embedding = target.get("embedding")
+    err = target.get("error") if isinstance(target.get("error"), dict) else None
+
+    # Failure-mode short-circuit: missing/zero-norm/error.
+    if err and err.get("type"):
+        return fallback_ingredients(
+            request_id=request_id, url=url, baseline_id=baseline_id, model_id=model_id,
+            reason=str(err.get("message") or err.get("type")), kind="fish",
+        )
+    if not isinstance(target_embedding, list) or not target_embedding:
+        return fallback_ingredients(
+            request_id=request_id, url=url, baseline_id=baseline_id, model_id=model_id,
+            reason="missing target embedding", kind="expired_milk",
+        )
+    target_embedding = [float(x) for x in target_embedding]
+    if l2_norm(target_embedding) < 1e-9:
+        return fallback_ingredients(
+            request_id=request_id, url=url, baseline_id=baseline_id, model_id=model_id,
+            reason="zero-norm target embedding", kind="expired_milk",
+        )
+
+    baseline_items = baseline.get("items")
+    if not isinstance(baseline_items, list) or not baseline_items:
+        return fallback_ingredients(
+            request_id=request_id, url=url, baseline_id=baseline_id, model_id=model_id,
+            reason="empty baseline", kind="expired_milk",
+        )
+
+    return ingredients_from_embeddings(
+        target_embedding=target_embedding,
+        baseline_items=baseline_items,
+        request_id=request_id,
+        url=url,
+        baseline_id=baseline_id,
+        model_id=model_id,
         pca_components=int((payload.get("pca") or {}).get("n_components", 3)),
     )

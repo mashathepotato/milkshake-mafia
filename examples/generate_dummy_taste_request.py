@@ -30,6 +30,8 @@ def main() -> int:
             {
                 "label": it["label"],
                 "url": it["url"],
+                "flavor_profile": it.get("flavor_profile", ""),
+                "why": it.get("why", ""),
                 "embedding": dummy_embedding_for_key(it["url"], embedding_dim=args.embedding_dim),
             }
         )

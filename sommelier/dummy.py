@@ -35,5 +35,11 @@ def load_cellar_urls(path: Path):
         url = str(item.get("url", "")).strip()
         if not label or not url:
             continue
-        out.append({"label": label, "url": url})
+        out.append({
+            "label": label,
+            "url": url,
+            "flavor_profile": str(item.get("flavor_profile", "")),
+            "why": str(item.get("why", "")),
+        })
     return out
+
