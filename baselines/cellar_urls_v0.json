@@ -1,0 +1,78 @@
+{
+  "baseline_id": "cellar-urls-v0",
+  "description": "Reference URLs for building Gold/Gunk (and Wasabi wildcard) baselines. Embeddings are computed by the Photographer tier and stored separately.",
+  "items": [
+    {
+      "label": "gold",
+      "url": "https://stripe.com",
+      "flavor_profile": "Premium Vanilla",
+      "why": "Color harmony and \"invisible\" UX polish."
+    },
+    {
+      "label": "gold",
+      "url": "https://linear.app",
+      "flavor_profile": "Cold Brew Espresso",
+      "why": "High contrast, dark-mode coherence, and precise layout."
+    },
+    {
+      "label": "gold",
+      "url": "https://apple.com",
+      "flavor_profile": "Organic Milk",
+      "why": "Extreme whitespace and breathability."
+    },
+    {
+      "label": "gold",
+      "url": "https://rauno.me",
+      "flavor_profile": "Artisanal Mint",
+      "why": "Exceptional micro-interactions and typography polish."
+    },
+    {
+      "label": "gold",
+      "url": "https://vercel.com",
+      "flavor_profile": "Salted Caramel",
+      "why": "Modern aesthetic paired with technical utility."
+    },
+    {
+      "label": "gunk",
+      "url": "https://arngren.net",
+      "flavor_profile": "The Deep Sea Shake",
+      "why": "Visual chaos with weak hierarchy and overwhelming density."
+    },
+    {
+      "label": "gunk",
+      "url": "https://lingscars.com",
+      "flavor_profile": "Sour Candy & Fish",
+      "why": "Deliberate visual assault with clashing animations and 90s vibes."
+    },
+    {
+      "label": "gunk",
+      "url": "https://berkshirehathaway.com",
+      "flavor_profile": "Expired Water",
+      "why": "Culturally/visually obsolete despite technical simplicity."
+    },
+    {
+      "label": "gunk",
+      "url": "https://art.yale.edu",
+      "flavor_profile": "Curdled Milk",
+      "why": "Wiki-style chaos aesthetic that breaks many UI conventions."
+    },
+    {
+      "label": "gunk",
+      "url": "https://rudgwicksteamshow.co.uk",
+      "flavor_profile": "Rusty Iron Shavings",
+      "why": "Legacy layouts, poor contrast, and weak mobile responsiveness."
+    },
+    {
+      "label": "wasabi",
+      "url": "https://yahoo.co.jp",
+      "flavor_profile": "Matcha Ginger",
+      "why": "High information density that is effective locally but can read as \"bitter\" to Western minimalists."
+    },
+    {
+      "label": "wasabi",
+      "url": "https://craigslist.org",
+      "flavor_profile": "Plain Tap Water",
+      "why": "Highly functional with almost no visual sugar."
+    }
+  ]
+}
