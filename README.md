@@ -10,37 +10,120 @@ The Taste Engine: a 3-tier pipeline that turns a URL into a virtual milkshake.
 URL → Photographer → screenshot + embedding → Sommelier → Ingredients → Barista → 🥤
 ```
 
-This branch (`sommelier`) carries:
+## Tiers
 
+- **Photographer** (`src/photographer/`): Playwright capture + DINOv2/histogram embedder. Emits `EmbeddingArtifact` per `context/DATA_CONTRACTS.md §2`.
 - **Sommelier** (`sommelier/`): pure-stdlib Python. PCA on the curated cellar, closed-vocab axis discovery, `Ingredients` JSON per `context/DATA_CONTRACTS.md §5`. See [`sommelier/README.md`](sommelier/README.md).
 - **Barista** (`barista/`): React-Three-Fiber milkshake renderer. Consumes `Ingredients`. See [`barista/README.md`](barista/README.md).
-- **Cellar** (`baselines/cellar_urls_v0.json`): 12 curated reference URLs (Gold / Gunk / Wasabi).
-- **Bake bridge** (`scripts/bake_barista_presets.py`): runs Sommelier on every cellar URL and writes typed presets to `barista/src/data/sommelierPresets.ts` so the Barista preset picker shows real Sommelier output alongside its mocks.
+- **Milkshake** (`milkshake/`): orchestrator that wires Photographer → Sommelier in one call. `python -m milkshake taste --url <URL>`.
+- **Cellar** (`baselines/cellar_urls_v0.json`): 12 curated reference URLs (Gold / Gunk / Wasabi). Embeddings live alongside in `baselines/embeddings/`.
 
-## Run end-to-end (offline, dummy embeddings)
+## Run end-to-end
 
 ```bash
-# 1) Bake real Sommelier output for the cellar URLs
-python3 scripts/bake_barista_presets.py
+# 0) Install (Photographer needs Playwright; Sommelier is stdlib-only)
+python -m venv .venv && source .venv/bin/activate
+pip install -e .                 # core: playwright, pillow, numpy, pydantic
+playwright install chromium
 
-# 2) Start Barista
-cd barista
-npm install
-npm run dev          # http://localhost:5173
+# 1) Build baseline embeddings for the cellar URLs (one-shot, ~1 min)
+python -m photographer baseline build
+
+# 2) Taste any URL end-to-end
+python -m milkshake taste --url https://stripe.com
 ```
 
-The bottom-left preset picker now lists the 4 hand-crafted mocks + 12 baked Sommelier presets (e.g. `gold-stripe-com`, `gunk-arngren-net`, `wasabi-yahoo-co-jp`). Each is the actual `Ingredients` shape Sommelier would emit; switching presets renders a different milkshake.
+For the offline / Barista preview path that doesn't need the live capture pipeline:
 
-`npm run bake` is wired in `barista/package.json` as a shortcut to step 1.
+```bash
+python3 scripts/bake_barista_presets.py    # uses dummy embeddings
+cd barista && npm install && npm run dev   # http://localhost:5173
+```
 
-## When Photographer ships
+## Photographer (visual encoder tier)
 
-The `bake` step takes a deterministic dummy embedding for each URL (`hashlib.sha256` → random vector). Once Photographer ships real Pix2Struct/CLIP embeddings, swap `dummy_embedding_for_key` in the bake script for the real embedder and re-run — the rest of the pipeline (axis discovery → Ingredients → Barista) is already wired.
+Turns a URL into a `ScreenshotArtifact` (PNG + metadata) and an `EmbeddingArtifact`
+(L2-normalized vector + metadata) per `context/DATA_CONTRACTS.md`. Capture and
+vectorization only — no scoring, PCA, or rendering.
 
-For the live "type a URL → see a shake" flow, point Barista at a small HTTP service that wraps `sommelier.taste.ingredients_from_taste_request`. The `<Scene ingredients={...} state={...}>` interface is the integration boundary; nothing in `barista/src/scene/` needs to change.
+### Embedders
 
-## Other branches
+| `model_id`       | Dim | Backend                                     | When used                     |
+| ---------------- | --- | ------------------------------------------- | ----------------------------- |
+| `dinov2-base`    | 768 | `facebook/dinov2-base` via `transformers`   | Optional. Needs torch+torchvision+transformers. |
+| `histogram-v0`   |  66 | numpy color histogram + Sobel edges + lum.  | Default for v0 — zero install friction. Auto-fallback if DINOv2 import fails. |
 
-- `photographer` — capture + embedding tier (Playwright + DINOv2/CLIP backend)
-- `barista/scaffold` — original Barista scaffold (merged here)
+The fallback is recorded as a warning on the artifact and as a `model_id` change
+on the baseline meta — Sommelier rejects mismatches, so always rebuild the
+baseline after switching backends.
+
+### Capture defaults
+
+| Setting       | Default                                      |
+| ------------- | -------------------------------------------- |
+| Viewport      | 1440×900                                     |
+| `full_page`   | `true` (clipped to 6000 px tall, warned)     |
+| `wait_until`  | `networkidle` (falls back to `domcontentloaded` on timeout, warned) |
+| `wait_ms`     | 500                                          |
+| User agent    | `Mozilla/5.0 (compatible; PhotographerBot/1.0)` |
+
+### CLI
+
+```bash
+python -m photographer capture --url https://stripe.com --out artifacts/
+python -m photographer embed   --image artifacts/<id>.png
+python -m photographer run     --url https://stripe.com --out artifacts/
+python -m photographer baseline build   # → baselines/embeddings/baseline_embeddings.jsonl + meta
+```
+
+`run` writes `<request_id>.png`, `<request_id>.screenshot.json`, and
+`<request_id>.embedding.json` to `--out`.
+
+### Baseline (Gold vs Gunk vs Wasabi)
+
+The baseline is the curated cellar at `baselines/cellar_urls_v0.json`. Each URL
+gets captured + embedded; output goes to `baselines/embeddings/`:
+
+- `baseline_embeddings.jsonl` — one `{label,url,flavor_profile,why,embedding}` per
+  line, drops straight into `TasteRequest.baseline.items`. The text fields are
+  preserved so `sommelier/axes.py` can name discovered PCA axes.
+- `baseline_meta.json` — `baseline_id`, `model_id`, `embedding_dim`,
+  `normalized`, `created_at`, item count.
+
+Rebuild whenever the embedder changes; Sommelier compares `embedding_dim` on
+both sides and the orchestrator compares `model_id`.
+
+### Smoke tests
+
+```bash
+python scripts/smoke_test.py                    # photographer-only
+python scripts/smoke_taste_url.py               # end-to-end (photographer → sommelier)
+```
+
+### Failure modes (surfaced, not raised)
+
+| Symptom                       | How it shows up                                          |
+| ----------------------------- | -------------------------------------------------------- |
+| `networkidle` hangs           | Warning + fallback to `domcontentloaded`                 |
+| Navigation timeout still      | `error.type="timeout"`, no PNG, embedding zero-vector    |
+| DNS / `net::ERR_*`            | `error.type="dns_error"`                                 |
+| Page taller than 6000 px      | Image clipped, warning recorded                          |
+| DINOv2 weights/torch missing  | Warning + automatic histogram fallback                   |
+
+Sommelier's `ingredients_from_taste_request()` short-circuits on any
+`target_embedding.error` and emits a `fish` / `expired_milk` `Ingredients`
+fallback so the Barista renderer always gets a valid payload.
+
+### Licensing notes
+
+DINOv2 (`facebook/dinov2-base`) is released under Apache-2.0 — fine for
+commercial use. The `histogram-v0` fallback is pure numpy, no model license.
+Swapping to CLIP or another backend is a new `Embedder` class in
+`src/photographer/embed.py` and a `load_embedder` arm.
+
+## Branches
+
 - `main` — context docs only
+- `photographer` — capture + embedding tier in isolation
+- `barista/scaffold` — original Barista scaffold
+- `sommelier` — integration branch (this one): Sommelier + Photographer + orchestrator
