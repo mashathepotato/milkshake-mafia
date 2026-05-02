@@ -6,7 +6,8 @@ import { SOMMELIER_PRESET_KEYS, SOMMELIER_PRESETS } from './data/sommelierPreset
 import { PresetPicker } from './ui/PresetPicker'
 import { BlendButton } from './ui/BlendButton'
 import { ConceptNote } from './ui/ConceptNote'
-import { UrlBar } from './ui/UrlBar'
+import { TasteBar } from './ui/TasteBar'
+import { ScreenshotPreview } from './ui/ScreenshotPreview'
 import type { Ingredients } from './types/ingredients'
 import type { BlendState } from './types/state'
 
@@ -30,6 +31,7 @@ export default function App() {
   const [presetKey, setPresetKey] = useState<string>(ALL_KEYS[0])
   const [state, setState] = useState<BlendState>('idle')
   const [livePreset, setLivePreset] = useState<Ingredients | null>(null)
+  const [liveScreenshot, setLiveScreenshot] = useState<string | null>(null)
 
   // Merged preset map + key list — live preset (if present) sits at the front of
   // the picker so it's easy to find after a fresh taste.
@@ -82,8 +84,9 @@ export default function App() {
     setTimeout(() => setState('done'), BLEND_DURATION_MS)
   }
 
-  function onTasted(ingredients: Ingredients) {
+  function onTasted(ingredients: Ingredients, screenshot: string | null) {
     setLivePreset(ingredients)
+    setLiveScreenshot(screenshot)
     setPresetKey(LIVE_KEY)
     // Auto-blend the freshly tasted URL so the user sees the shake immediately.
     requestAnimationFrame(() => requestAnimationFrame(runBlend))
@@ -97,7 +100,8 @@ export default function App() {
         <h1 className="text-2xl font-medium">Barista</h1>
       </header>
       <ConceptNote />
-      <UrlBar onTasted={onTasted} />
+      <TasteBar onTasted={onTasted} />
+      <ScreenshotPreview src={liveScreenshot} url={livePreset?.url} />
       <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={keyList} />
       <BlendButton state={state} onRun={runBlend} />
     </div>

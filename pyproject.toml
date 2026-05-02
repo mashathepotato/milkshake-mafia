@@ -11,7 +11,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dinov2 = ["torch>=2.0", "transformers>=4.30"]
-service = ["fastapi>=0.110", "uvicorn[standard]>=0.27"]
+service = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.6"]
 
 [project.scripts]
 photographer = "photographer.cli:main"
