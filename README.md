@@ -50,12 +50,17 @@ vectorization only — no scoring, PCA, or rendering.
 
 | `model_id`       | Dim | Backend                                     | When used                     |
 | ---------------- | --- | ------------------------------------------- | ----------------------------- |
-| `dinov2-base`    | 768 | `facebook/dinov2-base` via `transformers`   | Optional. Needs torch+torchvision+transformers. |
-| `histogram-v0`   |  66 | numpy color histogram + Sobel edges + lum.  | Default for v0 — zero install friction. Auto-fallback if DINOv2 import fails. |
+| `dinov2-base`    | 768 | `facebook/dinov2-base` via `transformers`   | **Default for the committed baseline.** Needs `pip install -e '.[dinov2]'` (torch + torchvision + transformers, ~500 MB; one-time HF model pull ~350 MB on first use). |
+| `histogram-v0`   |  66 | numpy color histogram + Sobel edges + lum.  | Zero-install fallback; auto-used if DINOv2 import fails. To use as the canonical baseline, run `python -m photographer baseline build --embedder histogram` and re-bake. |
 
 The fallback is recorded as a warning on the artifact and as a `model_id` change
 on the baseline meta — Sommelier rejects mismatches, so always rebuild the
 baseline after switching backends.
+
+The orchestrator and the FastAPI service both auto-pick the embedder whose
+`model_id` matches the committed baseline (via `embedder_for_baseline()`), so
+you don't usually need to pass `--embedder` by hand — just rebuild the baseline
+with the embedder you want as canonical and everything downstream follows.
 
 ### Capture defaults
 

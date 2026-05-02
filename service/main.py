@@ -30,7 +30,12 @@ for p in (_REPO_ROOT, _REPO_ROOT / "src"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from milkshake.taste_url import ModelMismatchError, taste_image, taste_url  # noqa: E402
+from milkshake.taste_url import (  # noqa: E402
+    ModelMismatchError,
+    embedder_for_baseline,
+    taste_image,
+    taste_url,
+)
 from photographer.embed import Embedder, load_embedder  # noqa: E402
 
 # Trim sommelier's richer meta down to what Barista's TS Ingredients type
@@ -59,7 +64,7 @@ def _get_embedder(name: Optional[str]) -> Embedder:
     global _default_embedder
     if name is None:
         if _default_embedder is None:
-            _default_embedder, _ = load_embedder(prefer="histogram")
+            _default_embedder = embedder_for_baseline()
         return _default_embedder
     embedder, _warnings = load_embedder(prefer=name)
     return embedder

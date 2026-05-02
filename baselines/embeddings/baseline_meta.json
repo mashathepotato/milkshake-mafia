@@ -1,9 +1,9 @@
 {
   "baseline_id": "cellar-urls-v0",
-  "model_id": "histogram-v0",
-  "embedding_dim": 66,
+  "model_id": "dinov2-base",
+  "embedding_dim": 768,
   "normalized": true,
-  "created_at": "2026-05-02T10:56:41.779805+00:00",
+  "created_at": "2026-05-02T11:44:35.257513+00:00",
   "item_count": 12,
   "skipped": [],
   "warnings": [],

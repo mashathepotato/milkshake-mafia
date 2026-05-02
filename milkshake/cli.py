@@ -10,13 +10,14 @@ from .taste_url import ModelMismatchError, taste_url
 
 
 def _cmd_taste(args: argparse.Namespace) -> int:
-    from photographer.embed import load_embedder
-
-    embedder, warnings = load_embedder(prefer=args.embedder)
-    for w in warnings:
-        print(f"Warning: {w}", file=sys.stderr)
-
     embeddings_dir = Path(args.embeddings_dir) if args.embeddings_dir else None
+
+    embedder = None
+    if args.embedder:
+        from photographer.embed import load_embedder
+        embedder, warnings = load_embedder(prefer=args.embedder)
+        for w in warnings:
+            print(f"Warning: {w}", file=sys.stderr)
 
     try:
         ingredients = taste_url(
@@ -63,8 +64,8 @@ def main(argv=None) -> int:
     p_taste.add_argument(
         "--embedder",
         choices=["dinov2", "histogram"],
-        default="histogram",
-        help="Which embedder to use (must match baseline's model_id)",
+        default=None,
+        help="Override embedder (default: auto-pick to match committed baseline model_id)",
     )
     p_taste.add_argument("--embeddings-dir", default=None, help="Override baselines/embeddings/ path")
     p_taste.add_argument("--pca-components", type=int, default=3)

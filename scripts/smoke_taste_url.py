@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -43,10 +44,15 @@ def _summarise(label: str, ingredients: dict) -> str:
     )
 
 
-def run(embedder_name: str) -> int:
-    embedder, warnings = load_embedder(prefer=embedder_name)
-    for w in warnings:
-        print(f"Warning: {w}", file=sys.stderr)
+def run(embedder_name: Optional[str]) -> int:
+    if embedder_name:
+        embedder, warnings = load_embedder(prefer=embedder_name)
+        for w in warnings:
+            print(f"Warning: {w}", file=sys.stderr)
+    else:
+        # Auto-pick the embedder that matches the committed baseline.
+        from milkshake.taste_url import embedder_for_baseline
+        embedder = embedder_for_baseline()
 
     failures: list[str] = []
 
@@ -91,8 +97,8 @@ def main() -> int:
     parser.add_argument(
         "--embedder",
         choices=["dinov2", "histogram"],
-        default="histogram",
-        help="Must match the model_id of the committed baseline",
+        default=None,
+        help="Override embedder (default: auto-pick to match the committed baseline model_id)",
     )
     args = parser.parse_args()
     return run(args.embedder)

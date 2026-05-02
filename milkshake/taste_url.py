@@ -29,6 +29,41 @@ class ModelMismatchError(RuntimeError):
     """Target embedding's model_id != baseline's model_id."""
 
 
+# Map a baseline's recorded model_id to the load_embedder() preference key
+# that produces the matching backend. Keep in sync with photographer.embed.
+_MODEL_TO_PREFER = {
+    "dinov2-base": "dinov2",
+    "histogram-v0": "histogram",
+}
+
+
+def embedder_for_baseline(embeddings_dir: Optional[Path] = None) -> Embedder:
+    """Load the embedder whose model_id matches the committed baseline.
+
+    The baseline is the source of truth — once it's built, the only embedder
+    that produces compatible target vectors is the one that built it. Callers
+    should prefer this over choosing an embedder by hand.
+    """
+    embeddings_dir = embeddings_dir or EMBEDDINGS_DIR
+    meta, _ = load_baseline(embeddings_dir)
+    model_id = meta["model_id"]
+    prefer = _MODEL_TO_PREFER.get(model_id)
+    if prefer is None:
+        raise ModelMismatchError(
+            f"baseline model_id={model_id!r} has no known embedder mapping; "
+            f"add it to milkshake.taste_url._MODEL_TO_PREFER"
+        )
+    embedder, warnings = load_embedder(prefer=prefer)
+    if embedder.model_id != model_id:
+        # load_embedder fell back (e.g., dinov2 unavailable → histogram). The
+        # fallback is incompatible with the baseline; surface it loudly.
+        raise ModelMismatchError(
+            f"baseline expects model_id={model_id!r} but loaded embedder is "
+            f"{embedder.model_id!r}; warnings: {warnings}"
+        )
+    return embedder
+
+
 def _resolve_screenshot_image(screenshot: ScreenshotArtifact) -> Optional[Image.Image]:
     """Pull a PIL image out of a ScreenshotArtifact (base64 or path)."""
     if screenshot.png_base64:
@@ -97,8 +132,9 @@ def taste_url(
     viewport = viewport or Viewport()
 
     if embedder is None:
-        embedder, _ = load_embedder(prefer="histogram")
-    _check_model(embedder, embeddings_dir)
+        embedder = embedder_for_baseline(embeddings_dir)
+    else:
+        _check_model(embedder, embeddings_dir)
 
     req = CaptureRequest(request_id=request_id, url=url, viewport=viewport)
     screenshot, embedding = process(req, embedder=embedder)
@@ -132,8 +168,9 @@ def taste_image(
     request_id = request_id or str(uuid.uuid4())[:8]
 
     if embedder is None:
-        embedder, _ = load_embedder(prefer="histogram")
-    _check_model(embedder, embeddings_dir)
+        embedder = embedder_for_baseline(embeddings_dir)
+    else:
+        _check_model(embedder, embeddings_dir)
 
     pil_image = image.convert("RGB")
     embedding = embed_image(
