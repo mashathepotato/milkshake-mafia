@@ -183,11 +183,15 @@ export default function App() {
       <header className="absolute left-6 top-6 z-10 text-white/80">
         <div className="text-xs uppercase tracking-[0.3em] text-white/40">Milkshake Mafia</div>
         <h1 className="text-2xl font-medium">Barista</h1>
-        <div className="mt-1 text-[11px] uppercase tracking-[0.25em] text-white/40">
+      </header>
+      <div className="pointer-events-none absolute left-1/2 top-6 z-20 -translate-x-1/2 text-center">
+        <div className="text-[10px] uppercase tracking-[0.45em] text-white/50">
           Now serving
         </div>
-        <div className="text-lg font-medium italic text-white">{milkshakeName}</div>
-      </header>
+        <div className="milkshake-title mt-1 text-4xl leading-tight md:text-5xl">
+          {milkshakeName}
+        </div>
+      </div>
       <ConceptNote />
       <TasteBar
         busy={tasteState !== 'idle'}

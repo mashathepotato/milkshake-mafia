@@ -13,6 +13,21 @@ html, body, #root {
   text-rendering: optimizeLegibility;
 }
 
+/* "Now serving" milkshake title in the top header — Playfair Display Italic
+   gives the menu/speakeasy feel that matches the Mafia branding. The
+   gradient text + soft glow lifts it off the dark scene. */
+.milkshake-title {
+  font-family: "Playfair Display", "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #fff7e6 0%, #f3c98b 70%, #c98b4a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 28px rgba(255, 209, 138, 0.18);
+}
+
 /* TastingFlow animations — see src/ui/TastingFlow.tsx */
 @keyframes tasting-scan-anim {
   0%   { background-position: 0 0; }
