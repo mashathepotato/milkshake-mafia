@@ -1,9 +1,11 @@
 """Bake Sommelier output for every cellar URL into Barista-loadable presets.
 
-Generates ``barista/src/data/sommelierPresets.ts`` from
-``baselines/cellar_urls_v0.json`` using deterministic dummy embeddings, so the
-Barista preset picker can render real Sommelier ``Ingredients`` alongside its
-hand-crafted mocks.
+Reads real photographer embeddings from
+``baselines/embeddings/baseline_embeddings.jsonl`` (built by
+``python -m photographer baseline build``) and projects each cellar URL through
+sommelier to produce canonical Ingredients. Writes
+``barista/src/data/sommelierPresets.ts`` so the Barista preset picker shows
+real Sommelier output for the cellar.
 
 Run from repo root:
     python3 scripts/bake_barista_presets.py
@@ -16,13 +18,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
-from sommelier.dummy import dummy_embedding_for_key, load_cellar_urls
+from photographer.baseline import load_baseline
 from sommelier.taste import ingredients_from_embeddings
 
-CELLAR = ROOT / "baselines" / "cellar_urls_v0.json"
 OUT = ROOT / "barista" / "src" / "data" / "sommelierPresets.ts"
-EMBED_DIM = 64
 
 # Fields Barista's TS Ingredients.meta currently declares — keep this in lockstep
 # with barista/src/types/ingredients.ts. Sommelier emits richer meta
@@ -48,33 +49,31 @@ def _trim_meta(ing: dict) -> dict:
 
 
 def main() -> int:
-    cellar = load_cellar_urls(CELLAR)
-
-    baseline_items = [
-        {
-            "label": it["label"],
-            "url": it["url"],
-            "flavor_profile": it.get("flavor_profile", ""),
-            "why": it.get("why", ""),
-            "embedding": dummy_embedding_for_key(it["url"], embedding_dim=EMBED_DIM),
-        }
-        for it in cellar
-    ]
+    try:
+        meta, baseline_items = load_baseline()
+    except FileNotFoundError as exc:
+        print(
+            f"Error: {exc}\n"
+            f"Run `python -m photographer baseline build` first to populate "
+            f"baselines/embeddings/.",
+            file=sys.stderr,
+        )
+        return 2
 
     presets: dict[str, dict] = {}
-    for it in cellar:
-        target = dummy_embedding_for_key(it["url"], embedding_dim=EMBED_DIM)
+    for item in baseline_items:
+        target_embedding = item["embedding"]
         ing = ingredients_from_embeddings(
-            target_embedding=target,
+            target_embedding=target_embedding,
             baseline_items=baseline_items,
-            request_id=f"sommelier-{_slug(it['url'])}",
-            url=it["url"],
-            baseline_id="cellar-urls-v0",
-            model_id="dummy",
+            request_id=f"sommelier-{_slug(item['url'])}",
+            url=item["url"],
+            baseline_id=meta["baseline_id"],
+            model_id=meta["model_id"],
             pca_components=3,
         )
         _trim_meta(ing)
-        presets[f"{it['label']}-{_slug(it['url'])}"] = ing
+        presets[f"{item['label']}-{_slug(item['url'])}"] = ing
 
     body = json.dumps(presets, indent=2, sort_keys=True)
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -88,7 +87,10 @@ def main() -> int:
         "export const SOMMELIER_PRESET_KEYS = Object.keys(SOMMELIER_PRESETS)\n",
         encoding="utf-8",
     )
-    print(f"Baked {len(presets)} presets → {OUT.relative_to(ROOT)}")
+    print(
+        f"Baked {len(presets)} presets from {meta['model_id']} embeddings "
+        f"(dim={meta['embedding_dim']}) → {OUT.relative_to(ROOT)}"
+    )
     return 0
 
 

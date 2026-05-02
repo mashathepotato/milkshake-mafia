@@ -1,5 +1,5 @@
 [project]
-name = "photographer"
+name = "milkshake-mafia"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
@@ -11,13 +11,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dinov2 = ["torch>=2.0", "transformers>=4.30"]
+service = ["fastapi>=0.110", "uvicorn[standard]>=0.27"]
 
 [project.scripts]
 photographer = "photographer.cli:main"
+milkshake = "milkshake.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = [".", "src"]
+include = ["photographer*", "milkshake*", "sommelier*", "service*"]

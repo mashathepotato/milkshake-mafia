@@ -9,20 +9,20 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#fff8d6",
       "hex": "#f3e5ab"
     },
-    "freshness": 0.4692,
+    "freshness": 0.5053,
     "inclusions": [
       {
-        "amount": 0.6,
-        "kind": "mint"
+        "amount": 0.585,
+        "kind": "sparkles"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": 0.2001,
-      "pc2": 0.2821,
-      "pc3": -0.1542
+      "model_id": "histogram-v0",
+      "pc1": 0.1381,
+      "pc2": 0.1782,
+      "pc3": 0.0151
     },
     "notes": [
       "closest to https://apple.com (Organic Milk)",
@@ -34,13 +34,13 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "texture": "airy",
     "toppings": [
       {
-        "amount": 0.66,
+        "amount": 0.641,
         "kind": "whipped_cream"
       }
     ],
     "url": "https://apple.com",
     "version": "ingredients-v0",
-    "viscosity": 0.55
+    "viscosity": 0.5345
   },
   "gold-linear-app": {
     "base": "chocolate",
@@ -48,89 +48,11 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#a87148",
       "hex": "#6b3f1d"
     },
-    "freshness": 0.4173,
+    "freshness": 0.419,
     "inclusions": [
       {
-        "amount": 0.601,
+        "amount": 0.755,
         "kind": "mint"
-      }
-    ],
-    "meta": {
-      "baseline_id": "cellar-urls-v0",
-      "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": 0.2039,
-      "pc2": -0.3035,
-      "pc3": -0.4134
-    },
-    "notes": [
-      "closest to https://linear.app (Cold Brew Espresso)",
-      "ordered/chaotic: leaning ordered"
-    ],
-    "request_id": "sommelier-linear-app",
-    "sweetness": 0.6,
-    "tartness": 0.4,
-    "texture": "airy",
-    "toppings": [
-      {
-        "amount": 0.661,
-        "kind": "whipped_cream"
-      }
-    ],
-    "url": "https://linear.app",
-    "version": "ingredients-v0",
-    "viscosity": 0.551
-  },
-  "gold-rauno-me": {
-    "base": "expired_milk",
-    "color": {
-      "accent_hex": "#eef0e3",
-      "hex": "#d6d8c2"
-    },
-    "freshness": 0.6243,
-    "inclusions": [
-      {
-        "amount": 0.551,
-        "kind": "tech_debt_chunks"
-      }
-    ],
-    "meta": {
-      "baseline_id": "cellar-urls-v0",
-      "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": -0.0037,
-      "pc2": -0.3794,
-      "pc3": 0.4973
-    },
-    "notes": [
-      "closest to https://rauno.me (Artisanal Mint)",
-      "ordered/chaotic: leaning chaotic"
-    ],
-    "request_id": "sommelier-rauno-me",
-    "sweetness": 0.3,
-    "tartness": 0.6,
-    "texture": "watery",
-    "toppings": [
-      {
-        "amount": 0.551,
-        "kind": "burnt_marshmallow"
-      }
-    ],
-    "url": "https://rauno.me",
-    "version": "ingredients-v0",
-    "viscosity": 0.4993
-  },
-  "gold-stripe-com": {
-    "base": "vanilla",
-    "color": {
-      "accent_hex": "#fff8d6",
-      "hex": "#f3e5ab"
-    },
-    "freshness": 0.5754,
-    "inclusions": [
-      {
-        "amount": 0.686,
-        "kind": "sparkles"
       },
       {
         "amount": 0.4,
@@ -140,28 +62,106 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": 0.5425,
-      "pc2": 0.1695,
-      "pc3": 0.3014
+      "model_id": "histogram-v0",
+      "pc1": 0.8206,
+      "pc2": -0.6623,
+      "pc3": -0.2701
     },
     "notes": [
-      "closest to https://stripe.com (Premium Vanilla)",
+      "closest to https://linear.app (Cold Brew Espresso)",
       "ordered/chaotic: leaning ordered"
     ],
-    "request_id": "sommelier-stripe-com",
+    "request_id": "sommelier-linear-app",
     "sweetness": 0.6,
     "tartness": 0.4,
     "texture": "smooth",
     "toppings": [
       {
-        "amount": 0.763,
+        "amount": 0.846,
+        "kind": "whipped_cream"
+      }
+    ],
+    "url": "https://linear.app",
+    "version": "ingredients-v0",
+    "viscosity": 0.7051
+  },
+  "gold-rauno-me": {
+    "base": "matcha",
+    "color": {
+      "accent_hex": "#cfe6b8",
+      "hex": "#8fbf6a"
+    },
+    "freshness": 0.85,
+    "inclusions": [
+      {
+        "amount": 0.541,
+        "kind": "sparkles"
+      }
+    ],
+    "meta": {
+      "baseline_id": "cellar-urls-v0",
+      "confidence": 1.0,
+      "model_id": "histogram-v0",
+      "pc1": -0.0371,
+      "pc2": -0.3155,
+      "pc3": 1.0
+    },
+    "notes": [
+      "closest to https://rauno.me (Artisanal Mint)",
+      "ordered/chaotic: leaning chaotic"
+    ],
+    "request_id": "sommelier-rauno-me",
+    "sweetness": 0.6,
+    "tartness": 0.4,
+    "texture": "watery",
+    "toppings": [
+      {
+        "amount": 0.589,
+        "kind": "whipped_cream"
+      }
+    ],
+    "url": "https://rauno.me",
+    "version": "ingredients-v0",
+    "viscosity": 0.4926
+  },
+  "gold-stripe-com": {
+    "base": "vanilla",
+    "color": {
+      "accent_hex": "#fff8d6",
+      "hex": "#f3e5ab"
+    },
+    "freshness": 0.4882,
+    "inclusions": [
+      {
+        "amount": 0.543,
+        "kind": "mint"
+      }
+    ],
+    "meta": {
+      "baseline_id": "cellar-urls-v0",
+      "confidence": 1.0,
+      "model_id": "histogram-v0",
+      "pc1": -0.0263,
+      "pc2": 0.2008,
+      "pc3": -0.0393
+    },
+    "notes": [
+      "closest to https://stripe.com (Premium Vanilla)",
+      "ordered/chaotic: leaning chaotic"
+    ],
+    "request_id": "sommelier-stripe-com",
+    "sweetness": 0.6,
+    "tartness": 0.4,
+    "texture": "watery",
+    "toppings": [
+      {
+        "amount": 0.592,
         "kind": "whipped_cream"
       }
     ],
     "url": "https://stripe.com",
     "version": "ingredients-v0",
-    "viscosity": 0.6356
+    "viscosity": 0.4947
   },
   "gold-vercel-com": {
     "base": "vanilla",
@@ -169,20 +169,20 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#fff8d6",
       "hex": "#f3e5ab"
     },
-    "freshness": 0.5526,
+    "freshness": 0.4748,
     "inclusions": [
       {
-        "amount": 0.589,
-        "kind": "sparkles"
+        "amount": 0.564,
+        "kind": "mint"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": 0.1554,
-      "pc2": 0.3606,
-      "pc3": 0.2102
+      "model_id": "histogram-v0",
+      "pc1": 0.0563,
+      "pc2": 0.2305,
+      "pc3": -0.0839
     },
     "notes": [
       "closest to https://vercel.com (Salted Caramel)",
@@ -194,13 +194,13 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "texture": "airy",
     "toppings": [
       {
-        "amount": 0.647,
+        "amount": 0.617,
         "kind": "whipped_cream"
       }
     ],
     "url": "https://vercel.com",
     "version": "ingredients-v0",
-    "viscosity": 0.5388
+    "viscosity": 0.5141
   },
   "gunk-arngren-net": {
     "base": "fish",
@@ -208,20 +208,20 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#9bbac3",
       "hex": "#4f7c8c"
     },
-    "freshness": 0.4095,
+    "freshness": 0.5068,
     "inclusions": [
       {
-        "amount": 0.637,
+        "amount": 0.56,
         "kind": "tech_debt_chunks"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": -0.349,
-      "pc2": 0.471,
-      "pc3": -0.4527
+      "model_id": "histogram-v0",
+      "pc1": -0.0407,
+      "pc2": 0.1697,
+      "pc3": 0.0193
     },
     "notes": [
       "closest to https://arngren.net (The Deep Sea Shake)",
@@ -233,13 +233,13 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "texture": "watery",
     "toppings": [
       {
-        "amount": 0.637,
-        "kind": "lint_dust"
+        "amount": 0.56,
+        "kind": "burnt_marshmallow"
       }
     ],
     "url": "https://arngren.net",
     "version": "ingredients-v0",
-    "viscosity": 0.4302
+    "viscosity": 0.4919
   },
   "gunk-art-yale-edu": {
     "base": "expired_milk",
@@ -247,38 +247,38 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#eef0e3",
       "hex": "#d6d8c2"
     },
-    "freshness": 0.4498,
+    "freshness": 0.4751,
     "inclusions": [
       {
-        "amount": 0.653,
+        "amount": 0.547,
         "kind": "tech_debt_chunks"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": -0.4135,
-      "pc2": -0.5099,
-      "pc3": -0.251
+      "model_id": "histogram-v0",
+      "pc1": 0.0131,
+      "pc2": 0.2142,
+      "pc3": -0.0832
     },
     "notes": [
       "closest to https://art.yale.edu (Curdled Milk)",
-      "ordered/chaotic: leaning chaotic"
+      "ordered/chaotic: leaning ordered"
     ],
     "request_id": "sommelier-art-yale-edu",
     "sweetness": 0.3,
     "tartness": 0.6,
-    "texture": "watery",
+    "texture": "airy",
     "toppings": [
       {
-        "amount": 0.653,
+        "amount": 0.547,
         "kind": "lint_dust"
       }
     ],
     "url": "https://art.yale.edu",
     "version": "ingredients-v0",
-    "viscosity": 0.4173
+    "viscosity": 0.5033
   },
   "gunk-berkshirehathaway-com": {
     "base": "expired_milk",
@@ -286,77 +286,77 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#eef0e3",
       "hex": "#d6d8c2"
     },
-    "freshness": 0.4835,
+    "freshness": 0.4628,
     "inclusions": [
       {
-        "amount": 0.65,
+        "amount": 0.534,
         "kind": "tech_debt_chunks"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": -0.3997,
-      "pc2": -0.1383,
-      "pc3": -0.0827
+      "model_id": "histogram-v0",
+      "pc1": 0.062,
+      "pc2": 0.2335,
+      "pc3": -0.1241
     },
     "notes": [
       "closest to https://berkshirehathaway.com (Expired Water)",
-      "ordered/chaotic: leaning chaotic"
+      "ordered/chaotic: leaning ordered"
     ],
     "request_id": "sommelier-berkshirehathaway-com",
     "sweetness": 0.3,
     "tartness": 0.6,
-    "texture": "watery",
+    "texture": "airy",
     "toppings": [
       {
-        "amount": 0.65,
+        "amount": 0.534,
         "kind": "lint_dust"
       }
     ],
     "url": "https://berkshirehathaway.com",
     "version": "ingredients-v0",
-    "viscosity": 0.4201
+    "viscosity": 0.5155
   },
   "gunk-lingscars-com": {
-    "base": "strawberry",
+    "base": "fish",
     "color": {
-      "accent_hex": "#ffd1e8",
-      "hex": "#ff4da6"
+      "accent_hex": "#9bbac3",
+      "hex": "#4f7c8c"
     },
-    "freshness": 0.5727,
+    "freshness": 0.4701,
     "inclusions": [
       {
-        "amount": 0.591,
-        "kind": "sparkles"
+        "amount": 0.648,
+        "kind": "tech_debt_chunks"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": 0.1655,
-      "pc2": -0.4127,
-      "pc3": 0.2909
+      "model_id": "histogram-v0",
+      "pc1": -0.3919,
+      "pc2": -0.0319,
+      "pc3": -0.0998
     },
     "notes": [
       "closest to https://lingscars.com (Sour Candy & Fish)",
-      "ordered/chaotic: leaning ordered"
+      "ordered/chaotic: leaning chaotic"
     ],
     "request_id": "sommelier-lingscars-com",
-    "sweetness": 0.6,
-    "tartness": 0.4,
-    "texture": "airy",
+    "sweetness": 0.3,
+    "tartness": 0.6,
+    "texture": "watery",
     "toppings": [
       {
-        "amount": 0.65,
-        "kind": "whipped_cream"
+        "amount": 0.648,
+        "kind": "lint_dust"
       }
     ],
     "url": "https://lingscars.com",
     "version": "ingredients-v0",
-    "viscosity": 0.5414
+    "viscosity": 0.4216
   },
   "gunk-rudgwicksteamshow-co-uk": {
     "base": "burnt_rubber",
@@ -364,20 +364,20 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#5e5e5e",
       "hex": "#2b2b2b"
     },
-    "freshness": 0.5378,
+    "freshness": 0.3976,
     "inclusions": [
       {
-        "amount": 0.582,
-        "kind": "tech_debt_chunks"
+        "amount": 0.722,
+        "kind": "bugs"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": -0.1261,
-      "pc2": 0.3818,
-      "pc3": 0.1512
+      "model_id": "histogram-v0",
+      "pc1": -0.687,
+      "pc2": -0.6634,
+      "pc3": -0.3415
     },
     "notes": [
       "closest to https://rudgwicksteamshow.co.uk (Rusty Iron Shavings)",
@@ -386,16 +386,16 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "request_id": "sommelier-rudgwicksteamshow-co-uk",
     "sweetness": 0.3,
     "tartness": 0.6,
-    "texture": "watery",
+    "texture": "sludge",
     "toppings": [
       {
-        "amount": 0.582,
-        "kind": "burnt_marshmallow"
+        "amount": 0.722,
+        "kind": "lint_dust"
       }
     ],
     "url": "https://rudgwicksteamshow.co.uk",
     "version": "ingredients-v0",
-    "viscosity": 0.4748
+    "viscosity": 0.3626
   },
   "wasabi-craigslist-org": {
     "base": "vanilla",
@@ -403,20 +403,20 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
       "accent_hex": "#fff8d6",
       "hex": "#f3e5ab"
     },
-    "freshness": 0.4043,
+    "freshness": 0.4936,
     "inclusions": [
       {
-        "amount": 0.67,
+        "amount": 0.561,
         "kind": "mint"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": 0.4798,
-      "pc2": -0.0998,
-      "pc3": -0.4783
+      "model_id": "histogram-v0",
+      "pc1": 0.0452,
+      "pc2": 0.2219,
+      "pc3": -0.0212
     },
     "notes": [
       "closest to https://craigslist.org (Plain Tap Water)",
@@ -428,52 +428,52 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "texture": "airy",
     "toppings": [
       {
-        "amount": 0.744,
+        "amount": 0.614,
         "kind": "whipped_cream"
       }
     ],
     "url": "https://craigslist.org",
     "version": "ingredients-v0",
-    "viscosity": 0.62
+    "viscosity": 0.5113
   },
   "wasabi-yahoo-co-jp": {
-    "base": "expired_milk",
+    "base": "matcha",
     "color": {
-      "accent_hex": "#eef0e3",
-      "hex": "#d6d8c2"
+      "accent_hex": "#cfe6b8",
+      "hex": "#8fbf6a"
     },
-    "freshness": 0.5953,
+    "freshness": 0.4938,
     "inclusions": [
       {
-        "amount": 0.664,
-        "kind": "tech_debt_chunks"
+        "amount": 0.562,
+        "kind": "mint"
       }
     ],
     "meta": {
       "baseline_id": "cellar-urls-v0",
       "confidence": 1.0,
-      "model_id": "dummy",
-      "pc1": -0.4552,
-      "pc2": 0.1788,
-      "pc3": 0.3813
+      "model_id": "histogram-v0",
+      "pc1": 0.0479,
+      "pc2": 0.2243,
+      "pc3": -0.0208
     },
     "notes": [
       "closest to https://yahoo.co.jp (Matcha Ginger)",
-      "ordered/chaotic: leaning chaotic"
+      "ordered/chaotic: leaning ordered"
     ],
     "request_id": "sommelier-yahoo-co-jp",
-    "sweetness": 0.3,
-    "tartness": 0.6,
-    "texture": "watery",
+    "sweetness": 0.6,
+    "tartness": 0.4,
+    "texture": "airy",
     "toppings": [
       {
-        "amount": 0.664,
-        "kind": "burnt_marshmallow"
+        "amount": 0.614,
+        "kind": "whipped_cream"
       }
     ],
     "url": "https://yahoo.co.jp",
     "version": "ingredients-v0",
-    "viscosity": 0.409
+    "viscosity": 0.512
   }
 }
 

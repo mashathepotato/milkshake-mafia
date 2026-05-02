@@ -6,6 +6,7 @@ import { SOMMELIER_PRESET_KEYS, SOMMELIER_PRESETS } from './data/sommelierPreset
 import { PresetPicker } from './ui/PresetPicker'
 import { BlendButton } from './ui/BlendButton'
 import { ConceptNote } from './ui/ConceptNote'
+import { UrlBar } from './ui/UrlBar'
 import type { Ingredients } from './types/ingredients'
 import type { BlendState } from './types/state'
 
@@ -14,6 +15,7 @@ import type { BlendState } from './types/state'
 // treats both pools identically — re-run `npm run bake` to refresh the latter.
 const ALL_PRESETS: Record<string, Ingredients> = { ...PRESETS, ...SOMMELIER_PRESETS }
 const ALL_KEYS: string[] = [...PRESET_KEYS, ...SOMMELIER_PRESET_KEYS]
+const LIVE_KEY = 'live'
 
 // Total blend timeline (must stay in sync with Blender.tsx + JarLiquid.tsx + IngredientFX.tsx):
 //  0.0  lid lifts
@@ -27,7 +29,15 @@ const BLEND_DURATION_MS = 3400
 export default function App() {
   const [presetKey, setPresetKey] = useState<string>(ALL_KEYS[0])
   const [state, setState] = useState<BlendState>('idle')
-  const preset = ALL_PRESETS[presetKey]
+  const [livePreset, setLivePreset] = useState<Ingredients | null>(null)
+
+  // Merged preset map + key list — live preset (if present) sits at the front of
+  // the picker so it's easy to find after a fresh taste.
+  const presetMap: Record<string, Ingredients> = livePreset
+    ? { [LIVE_KEY]: livePreset, ...ALL_PRESETS }
+    : ALL_PRESETS
+  const keyList: string[] = livePreset ? [LIVE_KEY, ...ALL_KEYS] : ALL_KEYS
+  const preset = presetMap[presetKey] ?? presetMap[keyList[0]]
 
   // Switching presets resets everything to idle. Saves users from manually
   // re-running between previews.
@@ -72,6 +82,13 @@ export default function App() {
     setTimeout(() => setState('done'), BLEND_DURATION_MS)
   }
 
+  function onTasted(ingredients: Ingredients) {
+    setLivePreset(ingredients)
+    setPresetKey(LIVE_KEY)
+    // Auto-blend the freshly tasted URL so the user sees the shake immediately.
+    requestAnimationFrame(() => requestAnimationFrame(runBlend))
+  }
+
   return (
     <div className="fixed inset-0">
       <Scene ingredients={ingredients} state={state} />
@@ -80,7 +97,8 @@ export default function App() {
         <h1 className="text-2xl font-medium">Barista</h1>
       </header>
       <ConceptNote />
-      <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={ALL_KEYS} />
+      <UrlBar onTasted={onTasted} />
+      <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={keyList} />
       <BlendButton state={state} onRun={runBlend} />
     </div>
   )
