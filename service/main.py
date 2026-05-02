@@ -3,10 +3,14 @@
 Endpoints:
     POST /taste         {url}             → {ingredients, screenshot}
     POST /taste/upload  multipart file    → {ingredients, screenshot}
+    POST /remix         {request_id, instruction} → {ingredients, screenshot, parsed}
     GET  /health                          → {status: "ok"}
 
 Loads embedder + baseline once at startup so each request only pays the
 capture/embed cost (~5–30s with histogram-v0 + Playwright; ~1s for upload).
+The /remix endpoint blends an ingredient anchor into a session's stored
+embedding (no recapture) and re-projects through the same PCA, so chained
+remixes drift the milkshake while preserving the original site's grounding.
 
 Run:
     .venv/bin/uvicorn service.main:app --reload --port 8000
@@ -36,7 +40,15 @@ from milkshake.taste_url import (  # noqa: E402
     taste_image,
     taste_url,
 )
+from photographer.baseline import EMBEDDINGS_DIR, load_baseline  # noqa: E402
 from photographer.embed import Embedder, load_embedder  # noqa: E402
+from sommelier.remix import (  # noqa: E402
+    RemixParseError,
+    blend_embedding,
+    build_ingredient_anchors,
+    parse_remix_instruction,
+)
+from sommelier.taste import ingredients_from_embeddings  # noqa: E402
 
 # Trim sommelier's richer meta down to what Barista's TS Ingredients type
 # currently declares — same set the bake script uses.
@@ -57,7 +69,22 @@ class TasteRequest(BaseModel):
     )
 
 
+class RemixRequest(BaseModel):
+    request_id: str = Field(..., min_length=1, description="ID from a prior /taste response")
+    instruction: str = Field(..., min_length=1, description="e.g. 'add a splash of mint'")
+
+
 _default_embedder: Embedder | None = None
+
+# Cached at startup; reused by /taste, /taste/upload, and /remix.
+_BASELINE_META: dict | None = None
+_BASELINE_ITEMS: list[dict] | None = None
+_ANCHORS: dict[str, list[float]] | None = None
+
+# In-memory session store keyed by request_id. Each entry holds the *current*
+# (possibly chained-remix) embedding for that session so the next /remix can
+# build on it. TODO: evict — single-user demo for now.
+_SESSIONS: dict[str, dict] = {}
 
 
 def _get_embedder(name: Optional[str]) -> Embedder:
@@ -89,6 +116,12 @@ def _thumbnail_data_url(image: Optional[Image.Image]) -> Optional[str]:
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def _store_session(request_id: str, embedding: list[float], *, url: str) -> None:
+    """Persist a tasted embedding so /remix can build on it. No-op on empty embeddings."""
+    if embedding:
+        _SESSIONS[request_id] = {"embedding": embedding, "url": url, "request_id": request_id}
+
+
 app = FastAPI(title="Milkshake Mafia — Taste Bridge", version="0.1.0")
 
 app.add_middleware(
@@ -101,8 +134,12 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def _warm_embedder() -> None:
+def _warm_caches() -> None:
+    """Load embedder + baseline + ingredient anchor table once."""
+    global _BASELINE_META, _BASELINE_ITEMS, _ANCHORS
     _get_embedder(None)
+    _BASELINE_META, _BASELINE_ITEMS = load_baseline(EMBEDDINGS_DIR)
+    _ANCHORS = build_ingredient_anchors(_BASELINE_ITEMS)
 
 
 @app.get("/health")
@@ -114,7 +151,12 @@ def health() -> dict:
 def taste(req: TasteRequest) -> dict:
     try:
         embedder = _get_embedder(req.embedder)
-        ingredients, screenshot = taste_url(req.url, embedder=embedder, return_screenshot=True)
+        ingredients, screenshot, embedding = taste_url(
+            req.url,
+            embedder=embedder,
+            return_screenshot=True,
+            return_embedding=True,
+        )
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=503,
@@ -128,6 +170,8 @@ def taste(req: TasteRequest) -> dict:
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"taste failed: {exc!r}") from exc
+
+    _store_session(ingredients["request_id"], embedding, url=req.url)
 
     return {
         "ingredients": _trim_meta(ingredients),
@@ -148,9 +192,12 @@ async def taste_upload(
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"unreadable image: {exc!r}") from exc
 
+    upload_url = f"upload://{file.filename or 'image'}"
     try:
         emb = _get_embedder(embedder)
-        ingredients = taste_image(image, embedder=emb, url=f"upload://{file.filename or 'image'}")
+        ingredients, embedding = taste_image(
+            image, embedder=emb, url=upload_url, return_embedding=True
+        )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ModelMismatchError as exc:
@@ -159,7 +206,57 @@ async def taste_upload(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"taste failed: {exc!r}") from exc
 
+    _store_session(ingredients["request_id"], embedding, url=upload_url)
+
     return {
         "ingredients": _trim_meta(ingredients),
         "screenshot": _thumbnail_data_url(image),
+    }
+
+
+@app.post("/remix")
+def remix(req: RemixRequest) -> dict:
+    if _BASELINE_ITEMS is None or _BASELINE_META is None or _ANCHORS is None:
+        raise HTTPException(status_code=503, detail="service still warming up; retry shortly")
+
+    session = _SESSIONS.get(req.request_id)
+    if session is None:
+        raise HTTPException(
+            status_code=404,
+            detail="session expired or unknown — taste a URL first",
+        )
+
+    try:
+        parsed = parse_remix_instruction(req.instruction)
+    except RemixParseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    anchor = _ANCHORS.get(parsed["kind"])
+    if anchor is None:
+        # Parser only emits known VOCAB names; guard anyway in case the anchor
+        # table got out of sync with the vocab.
+        raise HTTPException(status_code=500, detail=f"no anchor for {parsed['kind']!r}")
+
+    new_embedding = blend_embedding(session["embedding"], anchor, parsed["amount"])
+
+    try:
+        ingredients = ingredients_from_embeddings(
+            target_embedding=new_embedding,
+            baseline_items=_BASELINE_ITEMS,
+            request_id=session["request_id"],
+            url=session["url"],
+            baseline_id=_BASELINE_META["baseline_id"],
+            model_id=_BASELINE_META["model_id"],
+        )
+    except Exception as exc:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"remix failed: {exc!r}") from exc
+
+    # Chain forward: next /remix call builds on this blended embedding.
+    session["embedding"] = new_embedding
+
+    return {
+        "ingredients": _trim_meta(ingredients),
+        "screenshot": None,  # remix reuses the captured screenshot client-side
+        "parsed": parsed,
     }

@@ -73,6 +73,11 @@ def _resolve_screenshot_image(screenshot: ScreenshotArtifact) -> Optional[Image.
     return None
 
 
+def _embedding_vector(embedding) -> list[float]:
+    """Extract the float list from an EmbeddingArtifact (empty on capture/embed error)."""
+    return [float(x) for x in (embedding.embedding or [])]
+
+
 def _project(
     *,
     embedding,
@@ -117,13 +122,19 @@ def taste_url(
     request_id: Optional[str] = None,
     viewport: Optional[Viewport] = None,
     return_screenshot: bool = False,
+    return_embedding: bool = False,
 ):
     """Capture URL, embed, project into the cellar's PCA space.
 
     Returns canonical Ingredients dict per context/DATA_CONTRACTS.md §5.
-    If ``return_screenshot=True``, returns a tuple ``(ingredients, image)``
-    where ``image`` is a PIL.Image of the captured screenshot (or None on
-    capture failure).
+    If ``return_screenshot=True``, the result includes a PIL.Image of the
+    captured screenshot (or None on capture failure). If ``return_embedding``
+    is true, it also includes the raw target embedding vector — useful for
+    /remix-style downstream blending without recapturing the URL.
+
+    The result is a tuple in the order ``(ingredients, image, embedding)``,
+    omitting whichever optional pieces weren't requested. With both flags
+    false, just the dict is returned.
 
     On capture/embed failure, sommelier's short-circuit emits a fallback
     Ingredients (base="fish" or "expired_milk") rather than raising.
@@ -145,9 +156,14 @@ def taste_url(
         embeddings_dir=embeddings_dir,
         pca_components=pca_components,
     )
+    extras: list = []
     if return_screenshot:
-        return ingredients, _resolve_screenshot_image(screenshot)
-    return ingredients
+        extras.append(_resolve_screenshot_image(screenshot))
+    if return_embedding:
+        extras.append(_embedding_vector(embedding))
+    if not extras:
+        return ingredients
+    return (ingredients, *extras)
 
 
 def taste_image(
@@ -158,12 +174,14 @@ def taste_image(
     pca_components: int = 3,
     request_id: Optional[str] = None,
     url: str = "",
-) -> dict:
+    return_embedding: bool = False,
+):
     """Embed a pre-existing image (skips capture) and project via sommelier.
 
     Use for direct screenshot uploads — same downstream path as taste_url
-    but without Playwright. Always returns just the Ingredients dict; the
-    caller already has the image.
+    but without Playwright. Returns the Ingredients dict by default, or
+    ``(ingredients, embedding)`` when ``return_embedding=True`` so callers
+    can chain a /remix without re-uploading.
     """
     request_id = request_id or str(uuid.uuid4())[:8]
 
@@ -181,9 +199,12 @@ def taste_image(
         source="upload",
     )
 
-    return _project(
+    ingredients = _project(
         embedding=embedding,
         request_id=request_id,
         embeddings_dir=embeddings_dir,
         pca_components=pca_components,
     )
+    if return_embedding:
+        return ingredients, _embedding_vector(embedding)
+    return ingredients
