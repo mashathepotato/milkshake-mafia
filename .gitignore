@@ -32,6 +32,10 @@ __pycache__/
 .venv/
 venv/
 env/
+*.egg-info/
+
+# Local artifacts (PNGs + JSONs from CLI runs)
+artifacts/
 
 # Misc
 coverage/
