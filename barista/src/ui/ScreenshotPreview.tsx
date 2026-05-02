@@ -1,5 +1,5 @@
 import type { Ingredients } from '../types/ingredients'
-import { chipsFor, readableTextColor } from './chipUtils'
+import { chipStyle, chipsFor } from './chipUtils'
 
 // Persistent reference panel for the most-recently tasted URL/upload.
 // Renders the ingredient chips above the screenshot so the user can see
@@ -22,14 +22,14 @@ export function ScreenshotPreview({ src, ingredients }: Props) {
           {chips.map((c, i) => (
             <span
               key={i}
-              className="rounded-full px-2.5 py-0.5 text-[11px] font-medium"
-              style={{
-                backgroundColor: c.color,
-                color: readableTextColor(c.color),
-                boxShadow: `0 0 10px ${c.color}55`,
-              }}
+              className="rounded-full px-2.5 py-0.5 text-[11px] font-medium inline-flex items-center gap-1.5"
+              style={chipStyle(c)}
+              title={`freshness ${c.freshness.toFixed(2)}`}
             >
               {c.label}
+              <span className="text-[9px] opacity-70 font-mono">
+                ♥{Math.round(c.freshness * 100)}
+              </span>
             </span>
           ))}
         </div>

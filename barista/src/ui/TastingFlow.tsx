@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Ingredients } from '../types/ingredients'
 import type { TasteState } from '../types/state'
-import { chipsFor, readableTextColor } from './chipUtils'
+import { chipStyle, chipsFor } from './chipUtils'
 
 interface Props {
   state: TasteState
@@ -105,15 +105,14 @@ export function TastingFlow({ state, screenshot, ingredients }: Props) {
               {chips.map((c, i) => (
                 <span
                   key={i}
-                  className="rounded-full px-3 py-1 text-xs font-medium"
-                  style={{
-                    backgroundColor: c.color,
-                    color: readableTextColor(c.color),
-                    boxShadow: `0 0 16px ${c.color}88`,
-                    animationDelay: `${i * 80}ms`,
-                  }}
+                  className="rounded-full px-3 py-1 text-xs font-medium inline-flex items-center gap-1.5"
+                  style={{ ...chipStyle(c), animationDelay: `${i * 80}ms` }}
+                  title={`freshness ${c.freshness.toFixed(2)}`}
                 >
                   {c.label}
+                  <span className="text-[10px] opacity-70 font-mono">
+                    ♥{Math.round(c.freshness * 100)}
+                  </span>
                 </span>
               ))}
             </div>

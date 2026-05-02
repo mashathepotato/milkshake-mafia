@@ -185,8 +185,8 @@ def build_ingredients(
         idx = int(((key + 1.0) / 2.0) * len(pool)) % len(pool)
         return pool[idx]
 
-    inclusions = []
-    toppings = []
+    inclusions: list[dict] = []
+    toppings: list[dict] = []
     if good_side:
         primary_pool = GOOD_PRIMARY_BRIGHT if pc3 >= 0.0 else GOOD_PRIMARY_CLASSIC
         inclusions.append({
@@ -210,6 +210,17 @@ def build_ingredients(
             "kind": _pick(BAD_TOPPING, pc3),
             "amount": round(0.3 + 0.5 * clamp01((-pc1 + 1) / 2), 3),
         })
+
+    # Per-ingredient freshness — each item gets a deterministic value derived
+    # from the global Ingredients.freshness with a small index-based dip
+    # (first item is the freshest, later items wilt slightly). Renders as
+    # chip opacity / 3D wilt in Barista; the global field stays the canonical
+    # summary number for downstream consumers that don't iterate items.
+    global_fresh = fields["freshness"]
+    for i, item in enumerate(inclusions):
+        item["freshness"] = round(clamp01(global_fresh - 0.08 * i), 3)
+    for i, item in enumerate(toppings):
+        item["freshness"] = round(clamp01(global_fresh - 0.05 * i), 3)
 
     # Notes — the demo line.
     notes = []

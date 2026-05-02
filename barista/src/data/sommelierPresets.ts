@@ -13,6 +13,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.603,
+        "freshness": 0.473,
         "kind": "blueberry"
       }
     ],
@@ -35,6 +36,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.663,
+        "freshness": 0.473,
         "kind": "honey_glaze"
       }
     ],
@@ -52,6 +54,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.521,
+        "freshness": 0.539,
         "kind": "raspberry"
       }
     ],
@@ -74,6 +77,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.565,
+        "freshness": 0.539,
         "kind": "honey_glaze"
       }
     ],
@@ -91,10 +95,12 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.76,
+        "freshness": 0.542,
         "kind": "kiwi_slice"
       },
       {
         "amount": 0.4,
+        "freshness": 0.462,
         "kind": "mint"
       }
     ],
@@ -117,6 +123,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.853,
+        "freshness": 0.542,
         "kind": "honey_glaze"
       }
     ],
@@ -134,6 +141,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.526,
+        "freshness": 0.718,
         "kind": "kiwi_slice"
       }
     ],
@@ -156,6 +164,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.572,
+        "freshness": 0.718,
         "kind": "honey_glaze"
       }
     ],
@@ -173,6 +182,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.601,
+        "freshness": 0.465,
         "kind": "blueberry"
       }
     ],
@@ -195,6 +205,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.661,
+        "freshness": 0.465,
         "kind": "honey_glaze"
       }
     ],
@@ -212,6 +223,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.569,
+        "freshness": 0.427,
         "kind": "eggshell"
       }
     ],
@@ -234,6 +246,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.569,
+        "freshness": 0.427,
         "kind": "burnt_marshmallow"
       }
     ],
@@ -251,6 +264,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.637,
+        "freshness": 0.51,
         "kind": "stale_chip"
       }
     ],
@@ -273,6 +287,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.637,
+        "freshness": 0.51,
         "kind": "mystery_sauce"
       }
     ],
@@ -290,6 +305,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.602,
+        "freshness": 0.47,
         "kind": "stale_chip"
       }
     ],
@@ -312,6 +328,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.602,
+        "freshness": 0.47,
         "kind": "burnt_marshmallow"
       }
     ],
@@ -329,6 +346,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.583,
+        "freshness": 0.582,
         "kind": "cold_pea"
       }
     ],
@@ -351,6 +369,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.583,
+        "freshness": 0.582,
         "kind": "mystery_sauce"
       }
     ],
@@ -368,6 +387,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.463,
+        "freshness": 0.441,
         "kind": "stale_chip"
       }
     ],
@@ -390,6 +410,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.463,
+        "freshness": 0.441,
         "kind": "burnt_marshmallow"
       }
     ],
@@ -407,6 +428,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.612,
+        "freshness": 0.434,
         "kind": "stale_chip"
       }
     ],
@@ -429,6 +451,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.612,
+        "freshness": 0.434,
         "kind": "burnt_marshmallow"
       }
     ],
@@ -446,6 +469,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.645,
+        "freshness": 0.478,
         "kind": "stale_chip"
       }
     ],
@@ -468,6 +492,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.645,
+        "freshness": 0.478,
         "kind": "burnt_marshmallow"
       }
     ],

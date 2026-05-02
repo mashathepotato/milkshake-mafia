@@ -23,11 +23,13 @@ export type ToppingKind =
 export interface Inclusion {
   kind: InclusionKind
   amount: number // [0,1]
+  freshness?: number // [0,1] — per-item ripeness; if omitted, treat as 1.0
 }
 
 export interface Topping {
   kind: ToppingKind
   amount: number // [0,1]
+  freshness?: number // [0,1] — per-item ripeness; if omitted, treat as 1.0
 }
 
 export interface Ingredients {
