@@ -7,6 +7,7 @@ import { useGLTF } from '@react-three/drei'
 
 export type AssetKey =
   | 'strawberry' | 'banana' | 'cherry' | 'beetle' | 'fish' | 'whipped_cream'
+  | 'kiwi' | 'blueberries' | 'raspberry' | 'papaya' | 'bread_loaf' | 'broccoli'
 
 export interface AssetSpec {
   url: string
@@ -69,6 +70,57 @@ export const ASSETS: Record<AssetKey, AssetSpec> = {
     nativeMax: [0.068, 0.097, 0.079],
     targetHeight: 0.18,
     averageColor: '#fff8e8',
+  },
+
+  // Poly.pizza GLBs — bboxes from scripts/inspect-ingredients.mjs.
+  // Mapped to Sommelier vocab strings via KIND_TO_ASSET in IngredientFX.tsx.
+  kiwi: {
+    url: '/models/ingredients/kiwi.glb',
+    nativeMin: [-0.273, -0.168, -0.219],
+    nativeMax: [0.273, 0.149, 0.219],
+    targetHeight: 0.18,
+    spinAxis: 'y',
+    averageColor: '#88c45a',
+  },
+  blueberries: {
+    url: '/models/ingredients/blueberries.glb',
+    nativeMin: [-0.365, -0.206, -0.321],
+    nativeMax: [0.365, 0.231, 0.321],
+    targetHeight: 0.20,
+    spinAxis: 'y',
+    averageColor: '#4f5db0',
+  },
+  raspberry: {
+    url: '/models/ingredients/raspberry.glb',
+    nativeMin: [-0.044, 0.000, -0.081],
+    nativeMax: [0.044, 0.171, 0.081],
+    targetHeight: 0.14,
+    spinAxis: 'y',
+    averageColor: '#c0392b',
+  },
+  papaya: {
+    url: '/models/ingredients/papaya.glb',
+    nativeMin: [-2.620, -0.929, -1.045],
+    nativeMax: [0.822, 1.723, 1.456],
+    targetHeight: 0.30,
+    spinAxis: 'y',
+    averageColor: '#ff8855',
+  },
+  bread_loaf: {
+    url: '/models/ingredients/bread_loaf.glb',
+    nativeMin: [-0.080, -0.055, -0.198],
+    nativeMax: [0.080, 0.097, 0.198],
+    targetHeight: 0.20,
+    spinAxis: 'y',
+    averageColor: '#c89764',
+  },
+  broccoli: {
+    url: '/models/ingredients/broccoli.glb',
+    nativeMin: [-4.394, -0.556, -4.407],
+    nativeMax: [4.394, 9.958, 4.407],
+    targetHeight: 0.22,
+    spinAxis: 'y',
+    averageColor: '#4a7d2c',
   },
 }
 

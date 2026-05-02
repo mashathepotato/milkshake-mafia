@@ -13,12 +13,31 @@ import { colorForKind } from './ingredientPalette'
 // to GenericIngredient (a colored sphere) instead of rendering nothing —
 // see ingredientPalette.ts for the per-kind colors.
 const KIND_TO_ASSET: Record<string, AssetKey> = {
+  // Original GLB set.
   strawberry: 'strawberry',
   banana: 'banana',
   fish: 'fish',
   sprinkles: 'cherry',
   bugs: 'beetle',
   whipped_cream: 'whipped_cream',
+
+  // Poly.pizza-sourced GLBs for the new fruit/gunk vocab. Some kinds reuse
+  // the closest-fitting fruit (mango_cube → papaya, raspberry → its own GLB
+  // which is also visually right for cherry/strawberry_chunk; pick whichever
+  // shape sells best for kinds that don't have a perfect match).
+  kiwi_slice: 'kiwi',
+  blueberry: 'blueberries',
+  raspberry: 'raspberry',
+  cherry: 'raspberry',
+  strawberry_chunk: 'raspberry',
+  mango_cube: 'papaya',
+  passionfruit: 'papaya',
+  peach_slice: 'papaya',
+  soggy_crouton: 'bread_loaf',
+  stale_chip: 'bread_loaf',
+  wilted_lettuce: 'broccoli',
+  cold_pea: 'broccoli',
+  mold: 'broccoli',
 }
 
 type Spawn = {
