@@ -69,11 +69,16 @@ export default function App() {
     }
   }, [])
 
+  // Color is derived from the active base via Sommelier's BASE_COLORS table —
+  // it's not a user knob. Leva had it as a slider before but the slider cached
+  // its initial value (the first preset's color) by name, which made the
+  // milkshake stuck on whatever the first preset was (the gold-strawberry mock,
+  // #ff5b8a — i.e. pink for everything). The four sliders below remain because
+  // they're meaningful overrides for *tweaking* the milkshake, not for tracking
+  // the preset.
   const overrides = useControls(
     'Ingredients (override)',
     {
-      colorHex: { value: preset.color.hex, label: 'color' },
-      accentHex: { value: preset.color.accent_hex, label: 'accent' },
       viscosity: { value: preset.viscosity, min: 0, max: 1, step: 0.01 },
       freshness: { value: preset.freshness, min: 0, max: 1, step: 0.01 },
       sweetness: { value: preset.sweetness, min: 0, max: 1, step: 0.01 },
@@ -85,7 +90,6 @@ export default function App() {
   const ingredients: Ingredients = useMemo(
     () => ({
       ...preset,
-      color: { hex: overrides.colorHex, accent_hex: overrides.accentHex },
       viscosity: overrides.viscosity,
       freshness: overrides.freshness,
       sweetness: overrides.sweetness,
