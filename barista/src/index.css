@@ -12,3 +12,39 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* TastingFlow animations — see src/ui/TastingFlow.tsx */
+@keyframes tasting-scan-anim {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 24px; }
+}
+.tasting-scan {
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0px,
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  background-size: 100% 24px;
+  animation: tasting-scan-anim 1.6s linear infinite;
+}
+
+@keyframes reveal-sweep-anim {
+  0%   { transform: translateY(-20%); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+.reveal-sweep {
+  animation: reveal-sweep-anim 1.4s ease-out forwards;
+}
+
+@keyframes chip-pop-anim {
+  0%   { transform: translateY(8px) scale(0.7); opacity: 0; }
+  60%  { transform: translateY(-2px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.chips-fade-in > * {
+  opacity: 0;
+  animation: chip-pop-anim 0.5s ease-out forwards;
+}
