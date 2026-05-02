@@ -6,25 +6,63 @@ import type { Ingredients } from '../types/ingredients'
 import type { BlendState } from '../types/state'
 import type { AssetKey } from './assetRegistry'
 import { Ingredient } from './Ingredient'
+import { GenericIngredient, type Slot } from './GenericIngredient'
+import { colorForKind } from './ingredientPalette'
 
-// Canonical-vocab → asset registry. Unmapped kinds fall through silently.
+// Canonical-vocab → asset registry. Anything outside this map falls through
+// to GenericIngredient (a colored sphere) instead of rendering nothing —
+// see ingredientPalette.ts for the per-kind colors.
 const KIND_TO_ASSET: Record<string, AssetKey> = {
+  // Original GLB set.
   strawberry: 'strawberry',
   banana: 'banana',
   fish: 'fish',
   sprinkles: 'cherry',
   bugs: 'beetle',
   whipped_cream: 'whipped_cream',
+
+  // Poly.pizza-sourced GLBs for the new fruit/gunk vocab. Some kinds reuse
+  // the closest-fitting fruit (mango_cube → papaya, raspberry → its own GLB
+  // which is also visually right for cherry/strawberry_chunk; pick whichever
+  // shape sells best for kinds that don't have a perfect match).
+  kiwi_slice: 'kiwi',
+  blueberry: 'blueberries',
+  raspberry: 'raspberry',
+  cherry: 'raspberry',
+  strawberry_chunk: 'raspberry',
+  mango_cube: 'papaya',
+  passionfruit: 'papaya',
+  peach_slice: 'papaya',
+  soggy_crouton: 'bread_loaf',
+  stale_chip: 'bread_loaf',
+  wilted_lettuce: 'broccoli',
+  cold_pea: 'broccoli',
+  mold: 'broccoli',
+
+  // Bases — most-emitted gold/gunk choices.
+  vanilla: 'marshmallows',          // soft/cream, reads as vanilla scoop
+  chocolate: 'chocolate',
+  matcha: 'avocado',                 // closest green object in the catalog
+  // Premium kickers + toppings.
+  mint: 'peppermint',
+  honey_glaze: 'donut',              // glazed donut reads as the topping
+  fresh_cream_dollop: 'cupcake',
+  caramel_drizzle: 'cookie',
+  coconut_flake: 'coconut',
+  // Gunk toppings.
+  mystery_sauce: 'flan',             // wobbly mystery dessert as the gunk garnish
 }
 
-interface Spawn {
+type Spawn = {
   key: string
-  asset: AssetKey
   position: [number, number, number]
   seed: number
   /** Slot in the jar to drop into — randomized but deterministic per spawn. */
   drop: [number, number, number]
-}
+} & (
+  | { type: 'glb'; asset: AssetKey }
+  | { type: 'generic'; slot: Slot; color: string }
+)
 
 function ringPositions(count: number, radius: number, height: number, phase: number) {
   return Array.from({ length: count }, (_, i) => {
@@ -52,36 +90,53 @@ interface Props {
 export function IngredientFX({ ingredients, state }: Props) {
   const spawns = useMemo<Spawn[]>(() => {
     const result: Spawn[] = []
+
+    // Base — 3 instances arranged in a ring above the blender.
     const baseAsset = KIND_TO_ASSET[ingredients.base]
-    if (baseAsset) {
-      const positions = ringPositions(3, 1.6, 2.9, 0)
-      positions.forEach((p, i) => {
-        const seed = (i * 0.371) % 1
-        result.push({ key: `base-${i}`, asset: baseAsset, position: p, seed, drop: jarSlot(seed) })
-      })
-    }
+    const basePositions = ringPositions(3, 1.6, 2.9, 0)
+    basePositions.forEach((p, i) => {
+      const seed = (i * 0.371) % 1
+      const common = { key: `base-${i}`, position: p, seed, drop: jarSlot(seed) }
+      if (baseAsset) {
+        result.push({ ...common, type: 'glb', asset: baseAsset })
+      } else {
+        result.push({ ...common, type: 'generic', slot: 'base', color: colorForKind(ingredients.base) })
+      }
+    })
+
+    // Inclusions — count scales with amount; ring above the base ring.
     ingredients.inclusions.forEach((inc, ix) => {
       const asset = KIND_TO_ASSET[inc.kind]
-      if (!asset) return
       const count = Math.max(1, Math.round(inc.amount * 6))
       const positions = ringPositions(count, 1.1, 2.4, ix * 0.15)
       positions.forEach((p, i) => {
         const seed = ((ix * 7 + i) * 0.371) % 1
-        result.push({ key: `inc-${ix}-${i}`, asset, position: p, seed, drop: jarSlot(seed) })
+        const common = { key: `inc-${ix}-${i}`, position: p, seed, drop: jarSlot(seed) }
+        if (asset) {
+          result.push({ ...common, type: 'glb', asset })
+        } else {
+          result.push({ ...common, type: 'generic', slot: 'inclusion', color: colorForKind(inc.kind) })
+        }
       })
     })
+
+    // Toppings — single instance per kind, perched above the jar.
     ingredients.toppings.forEach((t, ix) => {
       const asset = KIND_TO_ASSET[t.kind]
-      if (!asset) return
       const seed = 0.2 + ix * 0.1
-      result.push({
+      const common = {
         key: `top-${ix}`,
-        asset,
-        position: [0, 2.05, 0],
+        position: [0, 2.05, 0] as [number, number, number],
         seed,
         drop: jarSlot(seed),
-      })
+      }
+      if (asset) {
+        result.push({ ...common, type: 'glb', asset })
+      } else {
+        result.push({ ...common, type: 'generic', slot: 'topping', color: colorForKind(t.kind) })
+      }
     })
+
     return result
   }, [ingredients])
 
@@ -142,7 +197,17 @@ export function IngredientFX({ ingredients, state }: Props) {
           ref={(r) => { groupRefs.current[i] = r }}
           position={s.position}
         >
-          <Ingredient kind={s.asset} position={[0, 0, 0]} seed={s.seed} float={state === 'idle'} />
+          {s.type === 'glb' ? (
+            <Ingredient kind={s.asset} position={[0, 0, 0]} seed={s.seed} float={state === 'idle'} />
+          ) : (
+            <GenericIngredient
+              color={s.color}
+              slot={s.slot}
+              position={[0, 0, 0]}
+              seed={s.seed}
+              float={state === 'idle'}
+            />
+          )}
         </group>
       ))}
 
