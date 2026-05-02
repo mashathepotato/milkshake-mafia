@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useControls } from 'leva'
 import { Scene } from './scene/Scene'
 import { PRESET_KEYS, PRESETS } from './data/mockIngredients'
@@ -6,14 +6,12 @@ import { SOMMELIER_PRESET_KEYS, SOMMELIER_PRESETS } from './data/sommelierPreset
 import { PresetPicker } from './ui/PresetPicker'
 import { BlendButton } from './ui/BlendButton'
 import { ConceptNote } from './ui/ConceptNote'
-import { TasteBar } from './ui/TasteBar'
+import { TasteBar, type TasteSubmission } from './ui/TasteBar'
 import { ScreenshotPreview } from './ui/ScreenshotPreview'
+import { TastingFlow } from './ui/TastingFlow'
 import type { Ingredients } from './types/ingredients'
-import type { BlendState } from './types/state'
+import type { BlendState, TasteState } from './types/state'
 
-// Merge the hand-crafted mocks (smooth × chunky × gold × gunk extremes) with
-// real Sommelier output baked from baselines/cellar_urls_v0.json. The picker
-// treats both pools identically — re-run `npm run bake` to refresh the latter.
 const ALL_PRESETS: Record<string, Ingredients> = { ...PRESETS, ...SOMMELIER_PRESETS }
 const ALL_KEYS: string[] = [...PRESET_KEYS, ...SOMMELIER_PRESET_KEYS]
 const LIVE_KEY = 'live'
@@ -27,25 +25,43 @@ const LIVE_KEY = 'live'
 //  3.4  liquid + color settled → 'done'
 const BLEND_DURATION_MS = 3400
 
+// Reveal sequence: screenshot fades in → scan beam sweeps → ingredient
+// chips pop → card scales down. Must outlast the CSS keyframes (1.4s sweep).
+const REVEAL_DURATION_MS = 2400
+
+const TASTE_ENDPOINT = 'http://localhost:8000'
+
+interface TasteResponse {
+  ingredients: Ingredients
+  screenshot: string | null
+}
+
 export default function App() {
   const [presetKey, setPresetKey] = useState<string>(ALL_KEYS[0])
-  const [state, setState] = useState<BlendState>('idle')
+  const [blendState, setBlendState] = useState<BlendState>('idle')
+  const [tasteState, setTasteState] = useState<TasteState>('idle')
   const [livePreset, setLivePreset] = useState<Ingredients | null>(null)
   const [liveScreenshot, setLiveScreenshot] = useState<string | null>(null)
+  const [tasteError, setTasteError] = useState<string | null>(null)
+  const revealTimer = useRef<number | null>(null)
+  const blendTimer = useRef<number | null>(null)
 
-  // Merged preset map + key list — live preset (if present) sits at the front of
-  // the picker so it's easy to find after a fresh taste.
   const presetMap: Record<string, Ingredients> = livePreset
     ? { [LIVE_KEY]: livePreset, ...ALL_PRESETS }
     : ALL_PRESETS
   const keyList: string[] = livePreset ? [LIVE_KEY, ...ALL_KEYS] : ALL_KEYS
   const preset = presetMap[presetKey] ?? presetMap[keyList[0]]
 
-  // Switching presets resets everything to idle. Saves users from manually
-  // re-running between previews.
   useEffect(() => {
-    setState('idle')
+    setBlendState('idle')
   }, [presetKey])
+
+  useEffect(() => {
+    return () => {
+      if (revealTimer.current) window.clearTimeout(revealTimer.current)
+      if (blendTimer.current) window.clearTimeout(blendTimer.current)
+    }
+  }, [])
 
   const overrides = useControls(
     'Ingredients (override)',
@@ -73,37 +89,79 @@ export default function App() {
   )
 
   function runBlend() {
-    if (state === 'blending') return
-    // From 'done', briefly go through 'idle' so child components reset cleanly.
-    if (state === 'done') {
-      setState('idle')
-      requestAnimationFrame(() => requestAnimationFrame(() => setState('blending')))
+    if (blendState === 'blending') return
+    if (blendState === 'done') {
+      setBlendState('idle')
+      requestAnimationFrame(() => requestAnimationFrame(() => setBlendState('blending')))
     } else {
-      setState('blending')
+      setBlendState('blending')
     }
-    setTimeout(() => setState('done'), BLEND_DURATION_MS)
+    if (blendTimer.current) window.clearTimeout(blendTimer.current)
+    blendTimer.current = window.setTimeout(() => setBlendState('done'), BLEND_DURATION_MS)
   }
 
-  function onTasted(ingredients: Ingredients, screenshot: string | null) {
-    setLivePreset(ingredients)
-    setLiveScreenshot(screenshot)
-    setPresetKey(LIVE_KEY)
-    // Auto-blend the freshly tasted URL so the user sees the shake immediately.
-    requestAnimationFrame(() => requestAnimationFrame(runBlend))
+  // Drives the URL/upload → milkshake flow. The TastingFlow overlay observes
+  // tasteState + the just-fetched screenshot/ingredients; once the reveal
+  // window elapses we drop back to idle and trigger the existing 3D blend.
+  async function handleSubmit(submission: TasteSubmission) {
+    setTasteError(null)
+    setTasteState('tasting')
+    setLiveScreenshot(null)
+    try {
+      let res: Response
+      if (submission.mode === 'url') {
+        res = await fetch(`${TASTE_ENDPOINT}/taste`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: submission.url }),
+        })
+      } else {
+        const form = new FormData()
+        form.append('file', submission.file)
+        res = await fetch(`${TASTE_ENDPOINT}/taste/upload`, { method: 'POST', body: form })
+      }
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(detail.detail || `HTTP ${res.status}`)
+      }
+      const data = (await res.json()) as TasteResponse
+      setLivePreset(data.ingredients)
+      setLiveScreenshot(data.screenshot)
+      setPresetKey(LIVE_KEY)
+      setTasteState('revealing')
+
+      if (revealTimer.current) window.clearTimeout(revealTimer.current)
+      revealTimer.current = window.setTimeout(() => {
+        setTasteState('idle')
+        runBlend()
+      }, REVEAL_DURATION_MS)
+    } catch (err) {
+      setTasteError(err instanceof Error ? err.message : String(err))
+      setTasteState('idle')
+    }
   }
 
   return (
     <div className="fixed inset-0">
-      <Scene ingredients={ingredients} state={state} />
+      <Scene ingredients={ingredients} state={blendState} />
       <header className="absolute left-6 top-6 z-10 text-white/80">
         <div className="text-xs uppercase tracking-[0.3em] text-white/40">Milkshake Mafia</div>
         <h1 className="text-2xl font-medium">Barista</h1>
       </header>
       <ConceptNote />
-      <TasteBar onTasted={onTasted} />
+      <TasteBar
+        busy={tasteState !== 'idle'}
+        errorMessage={tasteError}
+        onSubmit={handleSubmit}
+      />
       <ScreenshotPreview src={liveScreenshot} url={livePreset?.url} />
       <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={keyList} />
-      <BlendButton state={state} onRun={runBlend} />
+      <BlendButton state={blendState} onRun={runBlend} />
+      <TastingFlow
+        state={tasteState}
+        screenshot={liveScreenshot}
+        ingredients={livePreset}
+      />
     </div>
   )
 }
