@@ -29,7 +29,12 @@ const BLEND_DURATION_MS = 3400
 // chips pop → card scales down. Must outlast the CSS keyframes (1.4s sweep).
 const REVEAL_DURATION_MS = 2400
 
-const TASTE_ENDPOINT = 'http://localhost:8000'
+// Point the URL/upload bar at a different host by setting VITE_TASTE_API_URL
+// in barista/.env.local before `npm run dev`. Default targets a locally
+// running uvicorn (see scripts/dev.sh).
+const TASTE_ENDPOINT =
+  (import.meta.env.VITE_TASTE_API_URL as string | undefined)?.replace(/\/+$/, '') ||
+  'http://localhost:8000'
 
 interface TasteResponse {
   ingredients: Ingredients
@@ -136,7 +141,16 @@ export default function App() {
         runBlend()
       }, REVEAL_DURATION_MS)
     } catch (err) {
-      setTasteError(err instanceof Error ? err.message : String(err))
+      // TypeError: Failed to fetch typically means the backend isn't reachable.
+      // Surface a hint about what to start so a teammate isn't stuck on a
+      // generic browser error.
+      const raw = err instanceof Error ? err.message : String(err)
+      const looksLikeNetwork = err instanceof TypeError && /fetch/i.test(raw)
+      setTasteError(
+        looksLikeNetwork
+          ? `Couldn't reach taste API at ${TASTE_ENDPOINT}. Start the backend (./scripts/dev.sh from the repo root) or set VITE_TASTE_API_URL.`
+          : raw,
+      )
       setTasteState('idle')
     }
   }

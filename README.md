@@ -20,24 +20,43 @@ URL → Photographer → screenshot + embedding → Sommelier → Ingredients �
 
 ## Run end-to-end
 
+**Easiest (full stack, one command):**
+
 ```bash
-# 0) Install (Photographer needs Playwright; Sommelier is stdlib-only)
-python -m venv .venv && source .venv/bin/activate
-pip install -e .                 # core: playwright, pillow, numpy, pydantic
-playwright install chromium
-
-# 1) Build baseline embeddings for the cellar URLs (one-shot, ~1 min)
-python -m photographer baseline build
-
-# 2) Taste any URL end-to-end
-python -m milkshake taste --url https://stripe.com
+./scripts/dev.sh
 ```
 
-For the offline / Barista preview path that doesn't need the live capture pipeline:
+First run bootstraps everything (creates `.venv`, installs Python deps incl.
+torch + transformers, downloads Playwright Chromium, builds the cellar
+baseline, installs `barista/node_modules`). Subsequent runs skip straight
+to launch. Ctrl+C stops both servers.
+
+Then open the Vite URL it prints (default `http://localhost:5173/`,
+hops if 5173 is taken). The URL/Upload bar in the top-right calls the
+local FastAPI bridge at `http://localhost:8000` by default — no extra
+config needed when running both on the same machine.
+
+**To point the frontend at a different backend** (e.g., a teammate's
+machine via ngrok, or a deploy):
 
 ```bash
-python3 scripts/bake_barista_presets.py    # uses dummy embeddings
-cd barista && npm install && npm run dev   # http://localhost:5173
+cp barista/.env.example barista/.env.local
+# edit barista/.env.local — set VITE_TASTE_API_URL
+./scripts/dev.sh
+```
+
+**CLI-only paths (no Barista UI):**
+
+```bash
+python -m milkshake taste --url https://stripe.com   # → Ingredients JSON
+python scripts/smoke_taste_url.py                    # gold + gunk + failure
+```
+
+**Offline preset preview (no capture, no API call):**
+
+```bash
+python3 scripts/bake_barista_presets.py    # rebake from baseline embeddings
+npm --prefix barista run dev                # http://localhost:5173
 ```
 
 ## Photographer (visual encoder tier)
