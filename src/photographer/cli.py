@@ -116,8 +116,14 @@ def cmd_baseline_build(args: argparse.Namespace) -> None:
     embedder, warnings = load_embedder(prefer=args.embedder)
     for w in warnings:
         print(f"Warning: {w}", file=sys.stderr)
-    baseline_dir = Path(args.baseline_dir) if args.baseline_dir else None
-    build(baseline_id=args.baseline_id, embedder=embedder, baseline_dir=baseline_dir)
+    cellar_path = Path(args.cellar) if args.cellar else None
+    out_dir = Path(args.out_dir) if args.out_dir else None
+    build(
+        baseline_id=args.baseline_id,
+        embedder=embedder,
+        cellar_path=cellar_path,
+        out_dir=out_dir,
+    )
 
 
 def main() -> None:
@@ -149,13 +155,17 @@ def main() -> None:
     # baseline
     p_bl = sub.add_parser("baseline", help="Baseline management")
     bl_sub = p_bl.add_subparsers(dest="baseline_command", required=True)
-    p_bl_build = bl_sub.add_parser("build", help="Build baseline_embeddings.jsonl from baseline/ PNGs")
-    p_bl_build.add_argument("--baseline-id", default="gold-gunk-v0")
-    p_bl_build.add_argument("--baseline-dir", default=None, help="Override baseline directory")
+    p_bl_build = bl_sub.add_parser(
+        "build",
+        help="Capture + embed every URL in baselines/cellar_urls_v0.json into baselines/embeddings/",
+    )
+    p_bl_build.add_argument("--baseline-id", default=None, help="Override baseline_id (defaults to cellar JSON's baseline_id)")
+    p_bl_build.add_argument("--cellar", default=None, help="Override cellar URLs JSON path (default: baselines/cellar_urls_v0.json)")
+    p_bl_build.add_argument("--out-dir", default=None, help="Override embeddings output directory (default: baselines/embeddings/)")
     p_bl_build.add_argument(
         "--embedder",
         choices=["dinov2", "histogram"],
-        default="dinov2",
+        default="histogram",
         help="Which embedder to use; falls back to histogram if dinov2 unavailable",
     )
 

@@ -1,9 +1,0 @@
-{
-  "baseline_id": "gold-gunk-v0",
-  "model_id": "histogram-v0",
-  "embedding_dim": 66,
-  "normalized": true,
-  "created_at": "2026-05-02T08:04:25.868543+00:00",
-  "item_count": 14,
-  "warnings": []
-}
