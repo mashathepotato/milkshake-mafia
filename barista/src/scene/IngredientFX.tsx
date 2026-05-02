@@ -106,6 +106,9 @@ export function IngredientFX({ ingredients, state }: Props) {
 
     // Inclusions — count scales with amount; ring above the base ring.
     ingredients.inclusions.forEach((inc, ix) => {
+      // `sparkles` has its own Drei <Sparkles> particle overlay below;
+      // skip it here so we don't double-render it as colored spheres too.
+      if (inc.kind === 'sparkles') return
       const asset = KIND_TO_ASSET[inc.kind]
       const count = Math.max(1, Math.round(inc.amount * 6))
       const positions = ringPositions(count, 1.1, 2.4, ix * 0.15)
