@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Ingredients } from '../types/ingredients'
 import type { TasteState } from '../types/state'
-import { chipStyle, chipsFor } from './chipUtils'
+import { chipStyle, chipsFor, readableTextColor } from './chipUtils'
 
 interface Props {
   state: TasteState
@@ -14,6 +14,31 @@ const TASTING_TICKER = [
   'Embedding through DINOv2…',
   'Projecting through Sommelier cellar…',
   'Composing ingredients…',
+]
+
+// Ingredient swatches that float behind the scan shimmer while we wait for
+// the API. Mix of good bases, fruits, gunk garnish, and toppings — visualizes
+// the menu sommelier is sifting through. Coordinates are deterministic so
+// the swirl looks the same every render (no React-induced layout reshuffles).
+const CANDIDATE_VOCAB: ReadonlyArray<{ label: string; color: string; x: number; y: number }> = [
+  { label: 'strawberry',     color: '#ff4da6', x:  8, y: 10 },
+  { label: 'vanilla',        color: '#f3e5ab', x: 78, y:  8 },
+  { label: 'matcha',         color: '#8fbf6a', x: 38, y: 16 },
+  { label: 'chocolate',      color: '#6b3f1d', x: 60, y: 24 },
+  { label: 'banana',         color: '#f7d36c', x: 16, y: 36 },
+  { label: 'mango_cube',     color: '#ffb347', x: 70, y: 44 },
+  { label: 'kiwi_slice',     color: '#88c45a', x: 42, y: 52 },
+  { label: 'raspberry',      color: '#e74c3c', x: 14, y: 62 },
+  { label: 'blueberry',      color: '#4f7cb0', x: 80, y: 64 },
+  { label: 'cherry',         color: '#c0392b', x: 58, y: 72 },
+  { label: 'passionfruit',   color: '#ffaa3b', x: 30, y: 80 },
+  { label: 'fish',           color: '#4f7c8c', x: 88, y: 32 },
+  { label: 'mold',           color: '#5a6647', x: 22, y: 88 },
+  { label: 'eggshell',       color: '#e8dfc8', x: 66, y: 90 },
+  { label: 'mystery_sauce',  color: '#7c4a4a', x:  6, y: 80 },
+  { label: 'whipped_cream',  color: '#fff8e8', x: 50, y:  4 },
+  { label: 'honey_glaze',    color: '#f3c87a', x: 92, y: 78 },
+  { label: 'burnt_marshmallow', color: '#3a2a22', x: 24, y: 24 },
 ]
 
 // Visual transition that sits between the user submitting a URL and the 3D
@@ -63,6 +88,37 @@ export function TastingFlow({ state, screenshot, ingredients }: Props) {
         >
           {/* Placeholder background while no screenshot yet */}
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+
+          {/* Floating candidate ingredient chips while tasting — swirling
+              menu of possibilities sommelier is sifting through. Each chip
+              has a different float duration + delay so the cloud pulses
+              and breathes asymmetrically. */}
+          <div
+            className={`absolute inset-0 transition-opacity duration-500 ${
+              state === 'tasting' ? 'opacity-90' : 'opacity-0'
+            }`}
+          >
+            {CANDIDATE_VOCAB.map((c, i) => (
+              <span
+                key={c.label}
+                className="absolute rounded-full px-2 py-0.5 text-[10px] font-medium tasting-candidate"
+                style={{
+                  left: `${c.x}%`,
+                  top: `${c.y}%`,
+                  backgroundColor: c.color,
+                  color: readableTextColor(c.color),
+                  boxShadow: `0 0 12px ${c.color}99`,
+                  // Stagger so the cloud looks alive: each chip has its own
+                  // breath cycle (3.6–6.4s) and starts mid-cycle.
+                  animationDuration: `${3.6 + (i % 5) * 0.7}s`,
+                  animationDelay: `${(i * 0.31) % 4}s`,
+                  willChange: 'transform, opacity',
+                }}
+              >
+                {c.label}
+              </span>
+            ))}
+          </div>
 
           {/* Screenshot fades in once available */}
           {screenshot && (
