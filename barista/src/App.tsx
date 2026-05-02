@@ -154,7 +154,7 @@ export default function App() {
         errorMessage={tasteError}
         onSubmit={handleSubmit}
       />
-      <ScreenshotPreview src={liveScreenshot} url={livePreset?.url} />
+      <ScreenshotPreview src={liveScreenshot} ingredients={livePreset} />
       <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={keyList} />
       <BlendButton state={blendState} onRun={runBlend} />
       <TastingFlow

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Ingredients } from '../types/ingredients'
 import type { TasteState } from '../types/state'
+import { chipsFor, readableTextColor } from './chipUtils'
 
 interface Props {
   state: TasteState
@@ -38,21 +39,7 @@ export function TastingFlow({ state, screenshot, ingredients }: Props) {
   const baseColor = ingredients?.color.hex ?? '#9ad7ff'
   const accent = ingredients?.color.accent_hex ?? '#ffffff'
 
-  // Ingredient swatches drawn during reveal — base + inclusions + toppings.
-  // Each becomes a colored chip that animates outward.
-  const chips: { color: string; label: string }[] = ingredients
-    ? [
-        { color: ingredients.color.hex, label: ingredients.base },
-        ...ingredients.inclusions.map((i) => ({
-          color: ingredients.color.accent_hex,
-          label: i.kind,
-        })),
-        ...ingredients.toppings.map((t) => ({
-          color: ingredients.color.accent_hex,
-          label: t.kind,
-        })),
-      ].slice(0, 6)
-    : []
+  const chips = ingredients ? chipsFor(ingredients) : []
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
@@ -118,9 +105,10 @@ export function TastingFlow({ state, screenshot, ingredients }: Props) {
               {chips.map((c, i) => (
                 <span
                   key={i}
-                  className="rounded-full px-3 py-1 text-xs font-medium text-black"
+                  className="rounded-full px-3 py-1 text-xs font-medium"
                   style={{
                     backgroundColor: c.color,
+                    color: readableTextColor(c.color),
                     boxShadow: `0 0 16px ${c.color}88`,
                     animationDelay: `${i * 80}ms`,
                   }}
