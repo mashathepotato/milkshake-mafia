@@ -16,12 +16,30 @@ import re
 from .linalg import l2_norm, mean
 
 # VOCAB ingredients we accept (mirrors context/VOCAB.md).
+# Legacy strings (tech_debt_chunks, bugs, sparkles, etc.) are kept here as
+# acceptable INPUT vocabulary even though build_ingredients no longer emits
+# them — users typing "add some sparkles" should still get a sensible blend.
 GOOD_BASES = ("strawberry", "vanilla", "chocolate", "banana", "matcha")
 BAD_BASES = ("fish", "expired_milk", "burnt_rubber")
-POSITIVE_INCLUSIONS = ("sprinkles", "mint", "sparkles")
-NEGATIVE_INCLUSIONS = ("tech_debt_chunks", "bugs")
-POSITIVE_TOPPINGS = ("whipped_cream",)
-NEGATIVE_TOPPINGS = ("lint_dust", "burnt_marshmallow")
+
+POSITIVE_INCLUSIONS = (
+    # Current fruit pool (build_ingredients emits these).
+    "mango_cube", "raspberry", "kiwi_slice", "passionfruit",
+    "strawberry_chunk", "blueberry", "cherry", "peach_slice",
+    # Secondary kickers.
+    "coconut_flake", "caramel_drizzle", "honey_drop",
+    # Legacy positive inclusions (still accepted as input).
+    "mint", "sparkles", "sprinkles",
+)
+NEGATIVE_INCLUSIONS = (
+    # Current gunk pool.
+    "mold", "fish_bone", "rotten_banana", "soggy_crouton",
+    "eggshell", "stale_chip", "cold_pea", "wilted_lettuce",
+    # Legacy negative inclusions (still accepted).
+    "tech_debt_chunks", "bugs",
+)
+POSITIVE_TOPPINGS = ("whipped_cream", "honey_glaze", "fresh_cream_dollop")
+NEGATIVE_TOPPINGS = ("lint_dust", "burnt_marshmallow", "mystery_sauce", "cigarette_ash")
 
 ALL_INGREDIENTS = (
     GOOD_BASES + BAD_BASES
@@ -44,14 +62,42 @@ PROFILE_KEYWORDS = {
     "expired_milk":      ("expired", "curdled", "water"),
     "burnt_rubber":      ("burnt", "rusty", "iron"),
     # Inclusions / toppings reuse base-flavored anchors when their semantics overlap.
+    # Most new vocab has no direct cellar keyword match; falls back to the
+    # gold-mean (positive) or gunk-mean (negative) anchor automatically.
     "mint":              ("mint", "matcha"),
-    "sparkles":          ("modern", "polish"),     # likely no direct match -> falls back to gold mean
+    "sparkles":          ("modern", "polish"),
     "sprinkles":         ("candy",),
     "whipped_cream":     ("vanilla", "milk", "caramel"),
+    "honey_glaze":       ("vanilla", "caramel"),
+    "fresh_cream_dollop":("vanilla", "milk"),
+    # New fruit pool — anchors via the only fruit-adjacent keyword the cellar
+    # has ('candy' for strawberry/sweet) or fall back to the gold mean.
+    "strawberry_chunk":  ("strawberry", "candy"),
+    "raspberry":         ("strawberry", "candy"),
+    "blueberry":         ("strawberry", "candy"),
+    "cherry":            ("strawberry", "candy"),
+    "peach_slice":       ("vanilla", "candy"),
+    "mango_cube":        ("candy", "modern"),
+    "kiwi_slice":        ("matcha", "mint"),
+    "passionfruit":      ("modern", "candy"),
+    "coconut_flake":     ("vanilla", "milk"),
+    "caramel_drizzle":   ("caramel", "vanilla"),
+    "honey_drop":        ("vanilla",),
+    # New gunk pool.
     "tech_debt_chunks":  ("legacy", "rusty", "iron"),
-    "bugs":              ("chaos", "broken"),       # likely no direct match -> falls back to gunk mean
+    "bugs":              ("chaos", "broken"),
+    "mold":              ("expired", "curdled"),
+    "fish_bone":         ("fish", "deep sea"),
+    "rotten_banana":     ("expired", "curdled"),
+    "soggy_crouton":     ("expired", "water"),
+    "eggshell":          ("rusty", "iron"),
+    "stale_chip":        ("expired", "curdled"),
+    "cold_pea":          ("water", "deep sea"),
+    "wilted_lettuce":    ("expired", "curdled"),
     "lint_dust":         ("expired", "rusty", "iron"),
     "burnt_marshmallow": ("burnt", "rusty"),
+    "mystery_sauce":     ("curdled", "expired"),
+    "cigarette_ash":     ("burnt", "rusty"),
 }
 
 # User-typed phrases that map to ingredients (looser than PROFILE_KEYWORDS,
@@ -90,10 +136,41 @@ ALIAS_TO_INGREDIENT = {
     "premium": "whipped_cream",
     "fancy": "whipped_cream",
     "luxe": "whipped_cream",
+    "honey": "honey_glaze",
     "dusty": "lint_dust",
     "grimy": "lint_dust",
     "harsh": "burnt_marshmallow",
     "overcooked": "burnt_marshmallow",
+    # New fruit/gunk vocab aliases.
+    "mango": "mango_cube",
+    "raspberries": "raspberry",
+    "kiwi": "kiwi_slice",
+    "blueberries": "blueberry",
+    "blueberry": "blueberry",
+    "cherries": "cherry",
+    "peach": "peach_slice",
+    "peaches": "peach_slice",
+    "passion": "passionfruit",
+    "coconut": "coconut_flake",
+    "caramel": "caramel_drizzle",
+    "moldy": "mold",
+    "moldy bread": "mold",
+    "bone": "fish_bone",
+    "bones": "fish_bone",
+    "rotten banana": "rotten_banana",
+    "soggy": "soggy_crouton",
+    "crouton": "soggy_crouton",
+    "eggshells": "eggshell",
+    "shells": "eggshell",
+    "chip": "stale_chip",
+    "chips": "stale_chip",
+    "pea": "cold_pea",
+    "peas": "cold_pea",
+    "lettuce": "wilted_lettuce",
+    "wilted": "wilted_lettuce",
+    "cigarette": "cigarette_ash",
+    "ash": "cigarette_ash",
+    "mystery": "mystery_sauce",
 }
 
 # Amount keyword -> blend factor (passed as the `amount` arg to blend_embedding).
