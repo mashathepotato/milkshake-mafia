@@ -134,9 +134,17 @@ def build_ingredients(
     pc2 = pcs[1] if len(pcs) > 1 else 0.0
     pc3 = pcs[2] if len(pcs) > 2 else 0.0
 
-    good_side = pc1 >= 0.0
+    # Trust the nearest-anchor label over PC1 sign when the anchor is unambiguously
+    # gold or gunk: PC1 can land near the centroid (|pc1| ~ 0) for noisy embedders,
+    # which would otherwise flip a clearly-gold target into the bad-base branch.
+    nearest_label = (nearest_anchor or {}).get("label", "")
+    if nearest_label == "gold":
+        good_side = True
+    elif nearest_label == "gunk":
+        good_side = False
+    else:
+        good_side = pc1 >= 0.0
 
-    # Base flavor — snapped from nearest anchor's flavor_profile, with sign guard.
     nearest_profile = nearest_anchor.get("flavor_profile", "") if nearest_anchor else ""
     base = _snap_base_from_profile(nearest_profile, good_side=good_side)
     color_hex, accent_hex = BASE_COLORS.get(base, ("#cccccc", "#ffffff"))
