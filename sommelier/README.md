@@ -47,6 +47,15 @@ Notes are always two lines, fixed format:
 "{axis_pos}/{axis_neg}: leaning {direction}"
 ```
 
+## Bridge to Barista
+
+`scripts/bake_barista_presets.py` (at the repo root) runs `ingredients_from_embeddings` on every cellar URL and writes the results as a typed TS file at `barista/src/data/sommelierPresets.ts`. The Barista preset picker shows them alongside its hand-crafted mocks. From `barista/`:
+
+```bash
+npm run bake     # regenerate presets
+npm run dev      # see them in the picker
+```
+
 ## File layout
 
 - `sommelier/pca.py` — PCA via Gram + power iteration (stdlib)

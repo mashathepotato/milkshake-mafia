@@ -2,11 +2,18 @@ import { useEffect, useMemo, useState } from 'react'
 import { useControls } from 'leva'
 import { Scene } from './scene/Scene'
 import { PRESET_KEYS, PRESETS } from './data/mockIngredients'
+import { SOMMELIER_PRESET_KEYS, SOMMELIER_PRESETS } from './data/sommelierPresets'
 import { PresetPicker } from './ui/PresetPicker'
 import { BlendButton } from './ui/BlendButton'
 import { ConceptNote } from './ui/ConceptNote'
 import type { Ingredients } from './types/ingredients'
 import type { BlendState } from './types/state'
+
+// Merge the hand-crafted mocks (smooth × chunky × gold × gunk extremes) with
+// real Sommelier output baked from baselines/cellar_urls_v0.json. The picker
+// treats both pools identically — re-run `npm run bake` to refresh the latter.
+const ALL_PRESETS: Record<string, Ingredients> = { ...PRESETS, ...SOMMELIER_PRESETS }
+const ALL_KEYS: string[] = [...PRESET_KEYS, ...SOMMELIER_PRESET_KEYS]
 
 // Total blend timeline (must stay in sync with Blender.tsx + JarLiquid.tsx + IngredientFX.tsx):
 //  0.0  lid lifts
@@ -18,9 +25,9 @@ import type { BlendState } from './types/state'
 const BLEND_DURATION_MS = 3400
 
 export default function App() {
-  const [presetKey, setPresetKey] = useState<string>(PRESET_KEYS[0])
+  const [presetKey, setPresetKey] = useState<string>(ALL_KEYS[0])
   const [state, setState] = useState<BlendState>('idle')
-  const preset = PRESETS[presetKey]
+  const preset = ALL_PRESETS[presetKey]
 
   // Switching presets resets everything to idle. Saves users from manually
   // re-running between previews.
@@ -73,7 +80,7 @@ export default function App() {
         <h1 className="text-2xl font-medium">Barista</h1>
       </header>
       <ConceptNote />
-      <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} />
+      <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={ALL_KEYS} />
       <BlendButton state={state} onRun={runBlend} />
     </div>
   )
