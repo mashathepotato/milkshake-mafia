@@ -1,6 +1,11 @@
 import type { Ingredients } from '../types/ingredients'
 import { chipsFor, readableTextColor } from './chipUtils'
 
+interface Props {
+  src: string | null
+  ingredients: Ingredients | null
+}
+
 // Persistent reference panel for the most-recently tasted URL/upload.
 // Renders the ingredient chips above the screenshot so the user can see
 // the chosen base/inclusions/toppings while looking at the source image.
