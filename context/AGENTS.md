@@ -28,4 +28,31 @@ Read these docs before starting work on a tier:
 - Perfect “objective” UI taste.
 - Production-grade crawling, auth, or bot evasion.
 - Large-scale dataset management.
+
+## Running locally
+
+Full stack (FastAPI bridge + Barista frontend) with one command:
+
+```bash
+./scripts/dev.sh
+```
+
+First run bootstraps everything that's missing — Python venv (prefers `uv`,
+falls back to stdlib `venv`), `[service,dinov2]` deps, Playwright Chromium,
+the cellar baseline embeddings (12 captures, ~3 min), and `barista/node_modules`.
+Subsequent runs skip straight to launch. Ctrl+C stops both servers cleanly.
+
+Open the Vite URL it prints (default `http://localhost:5173/`). The URL
+input in the top-right calls the FastAPI bridge at `http://localhost:8000`
+by default; override with `barista/.env.local` (`VITE_TASTE_API_URL=…`)
+to point at a teammate's machine, an ngrok tunnel, or a deploy.
+
+Other entry points (no orchestrated stack needed):
+- `python -m milkshake taste --url <URL>` — URL → Ingredients JSON to stdout
+- `python -m photographer baseline build [--embedder histogram|dinov2]` — rebuild the cellar baseline
+- `python scripts/smoke_taste_url.py` — gold + gunk + failure-mode end-to-end check
+- `python3 scripts/bake_barista_presets.py` — refresh the static cellar presets in Barista's preset picker
+
+Full README at the repo root has the longer version (overrides, model
+licensing, failure modes).
 </INSTRUCTIONS>
