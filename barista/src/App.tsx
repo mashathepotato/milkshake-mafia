@@ -9,6 +9,7 @@ import { ConceptNote } from './ui/ConceptNote'
 import { TasteBar, type TasteSubmission } from './ui/TasteBar'
 import { ScreenshotPreview } from './ui/ScreenshotPreview'
 import { TastingFlow } from './ui/TastingFlow'
+import { RemixBar } from './ui/RemixBar'
 import type { Ingredients } from './types/ingredients'
 import type { BlendState, TasteState } from './types/state'
 
@@ -155,6 +156,15 @@ export default function App() {
     }
   }
 
+  // /remix response — same shape as /taste but screenshot is null (we reuse
+  // the captured screenshot from the original /taste). Skip the reveal flow:
+  // the user already saw it, just re-run the 3D blend with the new ingredients.
+  function handleRemixed(next: Ingredients) {
+    setLivePreset(next)
+    setPresetKey(LIVE_KEY)
+    requestAnimationFrame(() => requestAnimationFrame(runBlend))
+  }
+
   return (
     <div className="fixed inset-0">
       <Scene ingredients={ingredients} state={blendState} />
@@ -167,6 +177,11 @@ export default function App() {
         busy={tasteState !== 'idle'}
         errorMessage={tasteError}
         onSubmit={handleSubmit}
+      />
+      <RemixBar
+        requestId={livePreset?.request_id ?? null}
+        onRemixed={handleRemixed}
+        endpoint={`${TASTE_ENDPOINT}/remix`}
       />
       <ScreenshotPreview src={liveScreenshot} ingredients={livePreset} />
       <PresetPicker value={presetKey} onChange={setPresetKey} url={preset.url} keys={keyList} />
