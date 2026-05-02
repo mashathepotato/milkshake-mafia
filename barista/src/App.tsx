@@ -160,11 +160,13 @@ export default function App() {
     }
   }
 
-  // /remix response — same shape as /taste but screenshot is null (we reuse
-  // the captured screenshot from the original /taste). Skip the reveal flow:
-  // the user already saw it, just re-run the 3D blend with the new ingredients.
-  function handleRemixed(next: Ingredients) {
+  // /remix response — same shape as /taste. Skip the reveal flow: the user
+  // already saw it, just re-run the 3D blend with the new ingredients. The
+  // screenshot is the cached capture re-tinted by the new base color, so the
+  // reference panel updates in lockstep with the milkshake.
+  function handleRemixed(next: Ingredients, screenshot: string | null) {
     setLivePreset(next)
+    if (screenshot) setLiveScreenshot(screenshot)
     setPresetKey(LIVE_KEY)
     requestAnimationFrame(() => requestAnimationFrame(runBlend))
   }
