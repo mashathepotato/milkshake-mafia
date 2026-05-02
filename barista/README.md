@@ -180,6 +180,11 @@ scripts/
 ## Open work
 
 - Source GLBs for `vanilla`, `matcha`, `chocolate`, `mint`, `lint_dust`, `burnt_marshmallow`
+- Pull from [`context/poly_pizza_ingredients.json`](../context/poly_pizza_ingredients.json) — a
+  shared 100-entry catalog of poly.pizza ingredient models (fruit, food, vegetable,
+  dessert, candy). Wire by downloading each GLB into `public/models/ingredients/`,
+  extending `assetRegistry.ts` with bbox + targetHeight, and adding the kind →
+  asset mapping in `IngredientFX.tsx#KIND_TO_ASSET`.
 - Texture-driven surface variation for `texture` field (smooth/chunky/sludge)
 - Real screenshot preview pane (when Photographer is wired up)
 - Blade spin animation (current GLB has no separable blade — workaround:

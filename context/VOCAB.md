@@ -49,3 +49,18 @@ Barista should render *at least* the values from here (unknown values should fal
   2) Sommelier emits new values
   3) Barista adds rendering support (or a clear fallback)
 
+## Available 3D models (poly.pizza catalog)
+
+A 100-entry catalog of poly.pizza ingredient models lives at
+[`context/poly_pizza_ingredients.json`](./poly_pizza_ingredients.json) — 20
+each across `fruit`, `food`, `vegetable`, `dessert`, `candy`. Each entry has
+`slug`, `name`, `author`, `category`, and a canonical `url`. Sommelier and
+Barista should both treat this file as the shared menu of available GLBs:
+
+- **Sommelier** may emit any `slug` from this catalog as an `ingredients[].kind`
+  in addition to (or instead of) the canonical names listed above.
+- **Barista** can resolve each `slug` to `https://poly.pizza/m/{slug}` to
+  download the GLB and register it in `barista/src/scene/assetRegistry.ts`.
+
+Keep `version: poly-pizza-catalog-v1` bumped if the schema changes.
+
