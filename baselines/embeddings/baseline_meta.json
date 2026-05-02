@@ -1,0 +1,11 @@
+{
+  "baseline_id": "cellar-urls-v0",
+  "model_id": "histogram-v0",
+  "embedding_dim": 66,
+  "normalized": true,
+  "created_at": "2026-05-02T10:56:41.779805+00:00",
+  "item_count": 12,
+  "skipped": [],
+  "warnings": [],
+  "cellar_source": "baselines/cellar_urls_v0.json"
+}
