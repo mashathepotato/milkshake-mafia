@@ -38,6 +38,19 @@ const KIND_TO_ASSET: Record<string, AssetKey> = {
   wilted_lettuce: 'broccoli',
   cold_pea: 'broccoli',
   mold: 'broccoli',
+
+  // Bases — most-emitted gold/gunk choices.
+  vanilla: 'marshmallows',          // soft/cream, reads as vanilla scoop
+  chocolate: 'chocolate',
+  matcha: 'avocado',                 // closest green object in the catalog
+  // Premium kickers + toppings.
+  mint: 'peppermint',
+  honey_glaze: 'donut',              // glazed donut reads as the topping
+  fresh_cream_dollop: 'cupcake',
+  caramel_drizzle: 'cookie',
+  coconut_flake: 'coconut',
+  // Gunk toppings.
+  mystery_sauce: 'flan',             // wobbly mystery dessert as the gunk garnish
 }
 
 type Spawn = {

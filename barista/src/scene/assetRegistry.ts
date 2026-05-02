@@ -1,18 +1,27 @@
 import { useGLTF } from '@react-three/drei'
+import * as THREE from 'three'
 
-// One entry per GLB. nativeMin/nativeMax come from raw bbox inspection
-// (scripts/inspect-ingredients.mjs). targetHeight is how tall (in world units)
-// we want the asset to render — keeps disparate native scales visually
-// proportionate. Centering math in <Ingredient> assumes these bbox values.
+// One entry per GLB. nativeMin/nativeMax can be supplied from raw bbox
+// inspection (scripts/inspect-ingredients.mjs) for fast hand-tuned fit, OR
+// omitted, in which case Ingredient.tsx computes the bbox at runtime via
+// THREE.Box3().setFromObject() — which respects node-level transforms that
+// the static inspector doesn't apply. Use auto-fit for any GLB whose
+// reported bbox is wildly off (coconut, marshmallows, etc.).
+//
+// targetHeight is how tall (in world units) we want the asset to render —
+// keeps disparate native scales visually proportionate.
 
 export type AssetKey =
   | 'strawberry' | 'banana' | 'cherry' | 'beetle' | 'fish' | 'whipped_cream'
   | 'kiwi' | 'blueberries' | 'raspberry' | 'papaya' | 'bread_loaf' | 'broccoli'
+  | 'marshmallows' | 'chocolate' | 'avocado' | 'peppermint' | 'donut'
+  | 'flan' | 'cookie' | 'cupcake' | 'coconut'
 
 export interface AssetSpec {
   url: string
-  nativeMin: [number, number, number]
-  nativeMax: [number, number, number]
+  /** Optional — supply for hand-tuned fit; omit to auto-fit at runtime. */
+  nativeMin?: [number, number, number]
+  nativeMax?: [number, number, number]
   /** Desired world-space height. Real-world ratios are tuned for visibility,
       not realism (a real strawberry next to a blender is too small to read). */
   targetHeight: number
@@ -122,6 +131,63 @@ export const ASSETS: Record<AssetKey, AssetSpec> = {
     spinAxis: 'y',
     averageColor: '#4a7d2c',
   },
+
+  // Auto-fit GLBs (bbox computed at runtime by Ingredient.tsx). Targeted at
+  // the most-emitted bases + premium kickers + a few gunk toppings.
+  marshmallows: {
+    url: '/models/ingredients/marshmallows.glb',
+    targetHeight: 0.32,
+    spinAxis: 'y',
+    averageColor: '#fff5e6',
+  },
+  chocolate: {
+    url: '/models/ingredients/chocolate.glb',
+    targetHeight: 0.30,
+    spinAxis: 'y',
+    averageColor: '#6b3f1d',
+  },
+  avocado: {
+    url: '/models/ingredients/avocado.glb',
+    targetHeight: 0.28,
+    spinAxis: 'y',
+    averageColor: '#7a9a4a',
+  },
+  peppermint: {
+    url: '/models/ingredients/peppermint.glb',
+    targetHeight: 0.16,
+    spinAxis: 'y',
+    averageColor: '#e8f5e8',
+  },
+  donut: {
+    url: '/models/ingredients/donut.glb',
+    targetHeight: 0.20,
+    spinAxis: 'y',
+    averageColor: '#f3c87a',
+  },
+  flan: {
+    url: '/models/ingredients/flan.glb',
+    targetHeight: 0.22,
+    spinAxis: 'y',
+    averageColor: '#c4925a',
+  },
+  cookie: {
+    url: '/models/ingredients/cookie.glb',
+    targetHeight: 0.18,
+    spinAxis: 'y',
+    averageColor: '#a87a4f',
+  },
+  cupcake: {
+    url: '/models/ingredients/cupcake.glb',
+    targetHeight: 0.24,
+    spinAxis: 'y',
+    averageColor: '#fff2d6',
+  },
+  coconut: {
+    url: '/models/ingredients/coconut.glb',
+    targetHeight: 0.22,
+    spinAxis: 'y',
+    averageColor: '#fff5e0',
+  },
 }
 
 // Preload at module-evaluate so first preset switch doesn't suspend.
@@ -130,13 +196,31 @@ export const ASSETS: Record<AssetKey, AssetSpec> = {
 })
 
 /** Returns scale + position offset that centers the asset on origin and
-    fits the desired height — call once per cloned scene graph. */
+    fits the desired height. Returns null if the spec doesn't have a
+    hand-tuned bbox; caller should fall back to autoFitTransform. */
 export function fitTransform(spec: AssetSpec) {
+  if (!spec.nativeMin || !spec.nativeMax) return null
   const sizeY = spec.nativeMax[1] - spec.nativeMin[1]
   const scale = spec.targetHeight / Math.max(sizeY, 0.0001)
   const cx = (spec.nativeMin[0] + spec.nativeMax[0]) / 2
   const cy = (spec.nativeMin[1] + spec.nativeMax[1]) / 2
   const cz = (spec.nativeMin[2] + spec.nativeMax[2]) / 2
+  return {
+    scale,
+    offset: [-cx * scale, -cy * scale, -cz * scale] as [number, number, number],
+  }
+}
+
+/** Compute fit transform from a loaded scene — respects node-level
+    transforms that the static accessor min/max miss. Use for any GLB whose
+    static bbox is wildly off (root node has a giant scale). */
+export function autoFitTransform(scene: THREE.Object3D, targetHeight: number) {
+  const box = new THREE.Box3().setFromObject(scene)
+  const sizeY = Math.max(box.max.y - box.min.y, 0.0001)
+  const scale = targetHeight / sizeY
+  const cx = (box.min.x + box.max.x) / 2
+  const cy = (box.min.y + box.max.y) / 2
+  const cz = (box.min.z + box.max.z) / 2
   return {
     scale,
     offset: [-cx * scale, -cy * scale, -cz * scale] as [number, number, number],

@@ -26,7 +26,7 @@ from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
+from PIL import Image, ImageChops
 from pydantic import BaseModel, Field
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -42,6 +42,7 @@ from milkshake.taste_url import (  # noqa: E402
 )
 from photographer.baseline import EMBEDDINGS_DIR, load_baseline  # noqa: E402
 from photographer.embed import Embedder, load_embedder  # noqa: E402
+from sommelier.ingredients import BASE_COLORS  # noqa: E402
 from sommelier.remix import (  # noqa: E402
     RemixParseError,
     blend_embedding,
@@ -116,10 +117,43 @@ def _thumbnail_data_url(image: Optional[Image.Image]) -> Optional[str]:
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def _store_session(request_id: str, embedding: list[float], *, url: str) -> None:
-    """Persist a tasted embedding so /remix can build on it. No-op on empty embeddings."""
-    if embedding:
-        _SESSIONS[request_id] = {"embedding": embedding, "url": url, "request_id": request_id}
+def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+    h = hex_color.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _tint_image(image: Image.Image, hex_color: str, strength: float = 0.45) -> Image.Image:
+    """Multiply-blend a flat color over the image so the remix base is visible.
+
+    Strength is the alpha applied to the tint layer; 0.45 is enough to read
+    "mango" or "burnt rubber" at a glance without obliterating the source.
+    """
+    base = image.convert("RGB")
+    tint = Image.new("RGB", base.size, _hex_to_rgb(hex_color))
+    multiplied = ImageChops.multiply(base, tint)
+    return Image.blend(base, multiplied, max(0.0, min(1.0, strength)))
+
+
+def _store_session(
+    request_id: str,
+    embedding: list[float],
+    *,
+    url: str,
+    screenshot: Optional[Image.Image] = None,
+) -> None:
+    """Persist a tasted embedding (and source screenshot) so /remix can build on it.
+
+    No-op on empty embeddings. The screenshot is kept as a PIL image so /remix
+    can re-emit a tinted thumbnail without recapturing the page.
+    """
+    if not embedding:
+        return
+    _SESSIONS[request_id] = {
+        "embedding": embedding,
+        "url": url,
+        "request_id": request_id,
+        "screenshot": screenshot.copy() if screenshot is not None else None,
+    }
 
 
 app = FastAPI(title="Milkshake Mafia — Taste Bridge", version="0.1.0")
@@ -171,7 +205,7 @@ def taste(req: TasteRequest) -> dict:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"taste failed: {exc!r}") from exc
 
-    _store_session(ingredients["request_id"], embedding, url=req.url)
+    _store_session(ingredients["request_id"], embedding, url=req.url, screenshot=screenshot)
 
     return {
         "ingredients": _trim_meta(ingredients),
@@ -206,7 +240,7 @@ async def taste_upload(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"taste failed: {exc!r}") from exc
 
-    _store_session(ingredients["request_id"], embedding, url=upload_url)
+    _store_session(ingredients["request_id"], embedding, url=upload_url, screenshot=image)
 
     return {
         "ingredients": _trim_meta(ingredients),
@@ -255,8 +289,17 @@ def remix(req: RemixRequest) -> dict:
     # Chain forward: next /remix call builds on this blended embedding.
     session["embedding"] = new_embedding
 
+    # Re-emit the cached screenshot tinted by the new base color so the
+    # reference panel updates in lockstep with the milkshake. Falls back to
+    # the untinted source (or None) if the session predates screenshot caching.
+    tinted: Optional[Image.Image] = None
+    cached = session.get("screenshot")
+    if cached is not None:
+        base_hex, _accent = BASE_COLORS.get(ingredients.get("base", ""), ("#cccccc", "#ffffff"))
+        tinted = _tint_image(cached, base_hex)
+
     return {
         "ingredients": _trim_meta(ingredients),
-        "screenshot": None,  # remix reuses the captured screenshot client-side
+        "screenshot": _thumbnail_data_url(tinted) if tinted is not None else None,
         "parsed": parsed,
     }

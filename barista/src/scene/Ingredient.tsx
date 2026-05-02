@@ -2,7 +2,7 @@ import { useGLTF, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { ASSETS, fitTransform, type AssetKey } from './assetRegistry'
+import { ASSETS, autoFitTransform, fitTransform, type AssetKey } from './assetRegistry'
 
 interface Props {
   kind: AssetKey
@@ -23,9 +23,11 @@ export function Ingredient({ kind, position, seed = 0, float = true, scale = 1 }
 
   const cloned = useMemo(() => {
     const c = scene.clone(true)
-    const { scale: fit, offset } = fitTransform(spec)
-    c.scale.setScalar(fit)
-    c.position.set(...offset)
+    // Hand-tuned bbox if registry has one; otherwise compute from the loaded
+    // scene (respects node-level transforms that the static inspector misses).
+    const fit = fitTransform(spec) ?? autoFitTransform(c, spec.targetHeight)
+    c.scale.setScalar(fit.scale)
+    c.position.set(...fit.offset)
     return c
   }, [scene, spec])
 
