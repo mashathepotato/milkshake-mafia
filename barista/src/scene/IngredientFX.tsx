@@ -1,0 +1,161 @@
+import { useEffect, useMemo, useRef } from 'react'
+import gsap from 'gsap'
+import * as THREE from 'three'
+import { Sparkles } from '@react-three/drei'
+import type { Ingredients } from '../types/ingredients'
+import type { BlendState } from '../types/state'
+import type { AssetKey } from './assetRegistry'
+import { Ingredient } from './Ingredient'
+
+// Canonical-vocab → asset registry. Unmapped kinds fall through silently.
+const KIND_TO_ASSET: Record<string, AssetKey> = {
+  strawberry: 'strawberry',
+  banana: 'banana',
+  fish: 'fish',
+  sprinkles: 'cherry',
+  bugs: 'beetle',
+  whipped_cream: 'whipped_cream',
+}
+
+interface Spawn {
+  key: string
+  asset: AssetKey
+  position: [number, number, number]
+  seed: number
+  /** Slot in the jar to drop into — randomized but deterministic per spawn. */
+  drop: [number, number, number]
+}
+
+function ringPositions(count: number, radius: number, height: number, phase: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const t = (i + phase) / Math.max(count, 1)
+    const angle = t * Math.PI * 2
+    const wobble = ((i * 13.37) % 1) * 0.4
+    const r = radius + (wobble - 0.2) * 0.3
+    const y = height + ((i * 7.91) % 1) * 0.4
+    return [Math.cos(angle) * r, y, Math.sin(angle) * r] as [number, number, number]
+  })
+}
+
+function jarSlot(seed: number): [number, number, number] {
+  // Bowl interior is ~0.93 wide, ~0.56 deep. Stay well inside.
+  const a = seed * Math.PI * 2
+  const r = 0.12 + ((seed * 31) % 1) * 0.1
+  return [Math.cos(a) * r, 1.45, Math.sin(a) * r * 0.6]
+}
+
+interface Props {
+  ingredients: Ingredients
+  state: BlendState
+}
+
+export function IngredientFX({ ingredients, state }: Props) {
+  const spawns = useMemo<Spawn[]>(() => {
+    const result: Spawn[] = []
+    const baseAsset = KIND_TO_ASSET[ingredients.base]
+    if (baseAsset) {
+      const positions = ringPositions(3, 1.6, 2.9, 0)
+      positions.forEach((p, i) => {
+        const seed = (i * 0.371) % 1
+        result.push({ key: `base-${i}`, asset: baseAsset, position: p, seed, drop: jarSlot(seed) })
+      })
+    }
+    ingredients.inclusions.forEach((inc, ix) => {
+      const asset = KIND_TO_ASSET[inc.kind]
+      if (!asset) return
+      const count = Math.max(1, Math.round(inc.amount * 6))
+      const positions = ringPositions(count, 1.1, 2.4, ix * 0.15)
+      positions.forEach((p, i) => {
+        const seed = ((ix * 7 + i) * 0.371) % 1
+        result.push({ key: `inc-${ix}-${i}`, asset, position: p, seed, drop: jarSlot(seed) })
+      })
+    })
+    ingredients.toppings.forEach((t, ix) => {
+      const asset = KIND_TO_ASSET[t.kind]
+      if (!asset) return
+      const seed = 0.2 + ix * 0.1
+      result.push({
+        key: `top-${ix}`,
+        asset,
+        position: [0, 2.05, 0],
+        seed,
+        drop: jarSlot(seed),
+      })
+    })
+    return result
+  }, [ingredients])
+
+  const groupRefs = useRef<(THREE.Group | null)[]>([])
+
+  // Reset refs array length when spawn list changes (preset switch).
+  if (groupRefs.current.length !== spawns.length) {
+    groupRefs.current = new Array(spawns.length).fill(null)
+  }
+
+  // Drop animation when state goes to 'blending'. Stagger by index so it reads
+  // as an ordered pour rather than a synchronized teleport.
+  useEffect(() => {
+    if (state !== 'blending') return
+    const tl = gsap.timeline()
+    spawns.forEach((s, i) => {
+      const g = groupRefs.current[i]
+      if (!g) return
+      const delay = 0.35 + i * 0.04
+      tl.to(g.position, {
+        x: s.drop[0],
+        y: s.drop[1],
+        z: s.drop[2],
+        duration: 0.6,
+        ease: 'power2.in',
+      }, delay)
+      .to(g.scale, {
+        x: 0.001, y: 0.001, z: 0.001,
+        duration: 0.35,
+        ease: 'power2.in',
+      }, delay + 0.35)
+    })
+    return () => { tl.kill() }
+  }, [state, spawns])
+
+  // Returning to idle (preset switch or replay): restore positions + scale.
+  useEffect(() => {
+    if (state !== 'idle') return
+    spawns.forEach((s, i) => {
+      const g = groupRefs.current[i]
+      if (!g) return
+      g.position.set(...s.position)
+      g.scale.setScalar(1)
+    })
+  }, [state, spawns])
+
+  const sparkleAmount = ingredients.inclusions
+    .filter((i) => i.kind === 'sparkles')
+    .reduce((sum, i) => sum + i.amount, 0)
+
+  if (state === 'done') return null
+
+  return (
+    <>
+      {spawns.map((s, i) => (
+        <group
+          key={s.key}
+          ref={(r) => { groupRefs.current[i] = r }}
+          position={s.position}
+        >
+          <Ingredient kind={s.asset} position={[0, 0, 0]} seed={s.seed} float={state === 'idle'} />
+        </group>
+      ))}
+
+      {state === 'idle' && sparkleAmount > 0 && (
+        <Sparkles
+          count={Math.floor(60 * Math.min(1, sparkleAmount))}
+          scale={[3, 2, 3]}
+          position={[0, 1.6, 0]}
+          size={5}
+          speed={0.4}
+          color={ingredients.color.accent_hex}
+        />
+      )}
+    </>
+  )
+}
