@@ -40,9 +40,17 @@ command -v python3 >/dev/null || die "python3 not found. Install Python 3.11+."
 command -v node >/dev/null || die "node not found. Install Node 18+ (https://nodejs.org)."
 command -v npm >/dev/null || die "npm not found (ships with Node)."
 
-PY_VERSION="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
-PY_OK="$(python3 -c 'import sys; print(int(sys.version_info >= (3,11)))')"
-[ "$PY_OK" = "1" ] || die "Python $PY_VERSION found, need >= 3.11."
+# Prefer the venv's interpreter for the version check — the venv is the one
+# that actually runs uvicorn, and a too-old system python3 (e.g. macOS 3.9)
+# shouldn't block startup when .venv was already provisioned with 3.11+.
+if [ -x "$VENV/bin/python" ]; then
+  PY_FOR_CHECK="$VENV/bin/python"
+else
+  PY_FOR_CHECK="python3"
+fi
+PY_VERSION="$("$PY_FOR_CHECK" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+PY_OK="$("$PY_FOR_CHECK" -c 'import sys; print(int(sys.version_info >= (3,11)))')"
+[ "$PY_OK" = "1" ] || die "Python $PY_VERSION found ($PY_FOR_CHECK), need >= 3.11."
 
 # ---- python venv + deps ---------------------------------------------------
 

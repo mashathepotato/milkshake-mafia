@@ -3,7 +3,7 @@ import type { Ingredients } from '../types/ingredients'
 
 interface Props {
   requestId: string | null
-  onRemixed: (ingredients: Ingredients) => void
+  onRemixed: (ingredients: Ingredients, screenshot: string | null) => void
   endpoint?: string
 }
 
@@ -40,7 +40,7 @@ export function RemixBar({ requestId, onRemixed, endpoint = 'http://localhost:80
       }
       const data = (await res.json()) as RemixResponse
       if (data.parsed) setLastParsed(data.parsed)
-      onRemixed(data.ingredients)
+      onRemixed(data.ingredients, data.screenshot)
       setInstruction('')
       setStatus('idle')
     } catch (err) {

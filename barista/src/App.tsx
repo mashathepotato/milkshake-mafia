@@ -12,6 +12,7 @@ import { TastingFlow } from './ui/TastingFlow'
 import { RemixBar } from './ui/RemixBar'
 import type { Ingredients } from './types/ingredients'
 import type { BlendState, TasteState } from './types/state'
+import { nameFor } from './util/milkshakeName'
 
 const ALL_PRESETS: Record<string, Ingredients> = { ...PRESETS, ...SOMMELIER_PRESETS }
 const ALL_KEYS: string[] = [...PRESET_KEYS, ...SOMMELIER_PRESET_KEYS]
@@ -98,6 +99,11 @@ export default function App() {
     [preset, overrides],
   )
 
+  // Title is derived from the milkshake's structural ingredients (base +
+  // first inclusion/topping + texture), not the leva-overridden numerics —
+  // tweaking sweetness shouldn't rename the drink.
+  const milkshakeName = useMemo(() => nameFor(preset), [preset])
+
   function runBlend() {
     if (blendState === 'blending') return
     if (blendState === 'done') {
@@ -160,11 +166,13 @@ export default function App() {
     }
   }
 
-  // /remix response — same shape as /taste but screenshot is null (we reuse
-  // the captured screenshot from the original /taste). Skip the reveal flow:
-  // the user already saw it, just re-run the 3D blend with the new ingredients.
-  function handleRemixed(next: Ingredients) {
+  // /remix response — same shape as /taste. Skip the reveal flow: the user
+  // already saw it, just re-run the 3D blend with the new ingredients. The
+  // screenshot is the cached capture re-tinted by the new base color, so the
+  // reference panel updates in lockstep with the milkshake.
+  function handleRemixed(next: Ingredients, screenshot: string | null) {
     setLivePreset(next)
+    if (screenshot) setLiveScreenshot(screenshot)
     setPresetKey(LIVE_KEY)
     requestAnimationFrame(() => requestAnimationFrame(runBlend))
   }
@@ -175,6 +183,10 @@ export default function App() {
       <header className="absolute left-6 top-6 z-10 text-white/80">
         <div className="text-xs uppercase tracking-[0.3em] text-white/40">Milkshake Mafia</div>
         <h1 className="text-2xl font-medium">Barista</h1>
+        <div className="mt-1 text-[11px] uppercase tracking-[0.25em] text-white/40">
+          Now serving
+        </div>
+        <div className="text-lg font-medium italic text-white">{milkshakeName}</div>
       </header>
       <ConceptNote />
       <TasteBar
