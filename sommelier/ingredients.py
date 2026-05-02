@@ -162,21 +162,54 @@ def build_ingredients(
     for axis, pc in zip(axes, (pc1, pc2, pc3)):
         _apply_axis_effect(axis, pc, fields)
 
-    # Inclusions/toppings — sign + quality drives the choice.
+    # Inclusions/toppings — sign + quality + secondary PCs pick from a
+    # food/fruit pool (no more code-puns like tech_debt_chunks). Selection is
+    # deterministic in the PC scores so the same URL always gets the same
+    # garnish; PC1 magnitude drives `amount`, PC2/PC3 quadrants pick the kind.
+    #
+    # Good side: PC3 (modern/dated) splits bright vs. classic fruits;
+    #            PC2 (airy/dense) picks the second inclusion + topping.
+    # Bad side:  PC1 magnitude splits "very gunk" (visceral) vs. mid-gunk
+    #            (just stale); PC3 picks the topping flavor of failure.
+    GOOD_PRIMARY_BRIGHT = ("mango_cube", "raspberry", "kiwi_slice", "passionfruit")
+    GOOD_PRIMARY_CLASSIC = ("strawberry_chunk", "blueberry", "cherry", "peach_slice")
+    GOOD_SECONDARY_PREMIUM = ("coconut_flake", "caramel_drizzle", "mint")
+    GOOD_SECONDARY_SOFT = ("sprinkles", "honey_drop", "sparkles")
+    GOOD_TOPPING = ("whipped_cream", "honey_glaze", "fresh_cream_dollop")
+    BAD_PRIMARY_VISCERAL = ("mold", "fish_bone", "rotten_banana", "soggy_crouton")
+    BAD_PRIMARY_STALE = ("eggshell", "stale_chip", "cold_pea", "wilted_lettuce")
+    BAD_TOPPING = ("lint_dust", "burnt_marshmallow", "mystery_sauce", "cigarette_ash")
+
+    def _pick(pool, key):
+        """Deterministic pick from a tuple based on a [-1,1] PC score."""
+        idx = int(((key + 1.0) / 2.0) * len(pool)) % len(pool)
+        return pool[idx]
+
     inclusions = []
     toppings = []
     if good_side:
-        inclusions.append({"kind": "sparkles" if pc3 >= 0.0 else "mint",
-                           "amount": round(0.3 + 0.5 * clamp01((pc1 + 1) / 2), 3)})
+        primary_pool = GOOD_PRIMARY_BRIGHT if pc3 >= 0.0 else GOOD_PRIMARY_CLASSIC
+        inclusions.append({
+            "kind": _pick(primary_pool, pc2),
+            "amount": round(0.3 + 0.5 * clamp01((pc1 + 1) / 2), 3),
+        })
         if pc1 >= 0.5:
-            inclusions.append({"kind": "sprinkles", "amount": 0.4})
-        toppings.append({"kind": "whipped_cream",
-                         "amount": round(0.3 + 0.6 * clamp01((pc1 + 1) / 2), 3)})
+            secondary_pool = GOOD_SECONDARY_PREMIUM if pc3 >= 0.0 else GOOD_SECONDARY_SOFT
+            inclusions.append({"kind": _pick(secondary_pool, pc1), "amount": 0.4})
+        toppings.append({
+            "kind": _pick(GOOD_TOPPING, pc2),
+            "amount": round(0.3 + 0.6 * clamp01((pc1 + 1) / 2), 3),
+        })
     else:
-        inclusions.append({"kind": "bugs" if pc1 < -0.5 else "tech_debt_chunks",
-                           "amount": round(0.3 + 0.5 * clamp01((-pc1 + 1) / 2), 3)})
-        toppings.append({"kind": "lint_dust" if pc3 < 0.0 else "burnt_marshmallow",
-                         "amount": round(0.3 + 0.5 * clamp01((-pc1 + 1) / 2), 3)})
+        primary_pool = BAD_PRIMARY_VISCERAL if pc1 < -0.5 else BAD_PRIMARY_STALE
+        inclusions.append({
+            "kind": _pick(primary_pool, pc2),
+            "amount": round(0.3 + 0.5 * clamp01((-pc1 + 1) / 2), 3),
+        })
+        toppings.append({
+            "kind": _pick(BAD_TOPPING, pc3),
+            "amount": round(0.3 + 0.5 * clamp01((-pc1 + 1) / 2), 3),
+        })
 
     # Notes — the demo line.
     notes = []

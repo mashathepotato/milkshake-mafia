@@ -13,7 +13,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.603,
-        "kind": "mint"
+        "kind": "blueberry"
       }
     ],
     "meta": {
@@ -35,7 +35,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.663,
-        "kind": "whipped_cream"
+        "kind": "honey_glaze"
       }
     ],
     "url": "https://apple.com",
@@ -52,7 +52,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.521,
-        "kind": "sparkles"
+        "kind": "raspberry"
       }
     ],
     "meta": {
@@ -74,7 +74,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.565,
-        "kind": "whipped_cream"
+        "kind": "honey_glaze"
       }
     ],
     "url": "https://linear.app",
@@ -91,11 +91,11 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.76,
-        "kind": "sparkles"
+        "kind": "kiwi_slice"
       },
       {
         "amount": 0.4,
-        "kind": "sprinkles"
+        "kind": "mint"
       }
     ],
     "meta": {
@@ -117,7 +117,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.853,
-        "kind": "whipped_cream"
+        "kind": "honey_glaze"
       }
     ],
     "url": "https://rauno.me",
@@ -134,7 +134,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.526,
-        "kind": "sparkles"
+        "kind": "kiwi_slice"
       }
     ],
     "meta": {
@@ -156,7 +156,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.572,
-        "kind": "whipped_cream"
+        "kind": "honey_glaze"
       }
     ],
     "url": "https://stripe.com",
@@ -173,7 +173,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.601,
-        "kind": "mint"
+        "kind": "blueberry"
       }
     ],
     "meta": {
@@ -195,7 +195,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.661,
-        "kind": "whipped_cream"
+        "kind": "honey_glaze"
       }
     ],
     "url": "https://vercel.com",
@@ -212,7 +212,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.569,
-        "kind": "tech_debt_chunks"
+        "kind": "eggshell"
       }
     ],
     "meta": {
@@ -234,7 +234,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.569,
-        "kind": "lint_dust"
+        "kind": "burnt_marshmallow"
       }
     ],
     "url": "https://arngren.net",
@@ -251,7 +251,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.637,
-        "kind": "tech_debt_chunks"
+        "kind": "stale_chip"
       }
     ],
     "meta": {
@@ -273,7 +273,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.637,
-        "kind": "burnt_marshmallow"
+        "kind": "mystery_sauce"
       }
     ],
     "url": "https://art.yale.edu",
@@ -290,7 +290,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.602,
-        "kind": "tech_debt_chunks"
+        "kind": "stale_chip"
       }
     ],
     "meta": {
@@ -312,7 +312,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.602,
-        "kind": "lint_dust"
+        "kind": "burnt_marshmallow"
       }
     ],
     "url": "https://berkshirehathaway.com",
@@ -329,7 +329,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.583,
-        "kind": "tech_debt_chunks"
+        "kind": "cold_pea"
       }
     ],
     "meta": {
@@ -351,7 +351,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.583,
-        "kind": "burnt_marshmallow"
+        "kind": "mystery_sauce"
       }
     ],
     "url": "https://lingscars.com",
@@ -368,7 +368,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.463,
-        "kind": "tech_debt_chunks"
+        "kind": "stale_chip"
       }
     ],
     "meta": {
@@ -390,7 +390,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.463,
-        "kind": "lint_dust"
+        "kind": "burnt_marshmallow"
       }
     ],
     "url": "https://rudgwicksteamshow.co.uk",
@@ -407,7 +407,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.612,
-        "kind": "tech_debt_chunks"
+        "kind": "stale_chip"
       }
     ],
     "meta": {
@@ -429,7 +429,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.612,
-        "kind": "lint_dust"
+        "kind": "burnt_marshmallow"
       }
     ],
     "url": "https://craigslist.org",
@@ -446,7 +446,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "inclusions": [
       {
         "amount": 0.645,
-        "kind": "tech_debt_chunks"
+        "kind": "stale_chip"
       }
     ],
     "meta": {
@@ -468,7 +468,7 @@ export const SOMMELIER_PRESETS: Record<string, Ingredients> = {
     "toppings": [
       {
         "amount": 0.645,
-        "kind": "lint_dust"
+        "kind": "burnt_marshmallow"
       }
     ],
     "url": "https://yahoo.co.jp",

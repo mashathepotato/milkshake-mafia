@@ -26,22 +26,30 @@ Barista should render *at least* the values from here (unknown values should fal
 - `sludge` (overwhelming, broken, “gunk”)
 
 ## `Ingredients.inclusions[].kind`
-**Positive**
-- `sprinkles` (clean details, polish)
-- `mint` (restraint, clarity)
-- `sparkles` (delight, modern flair)
 
-**Negative**
-- `tech_debt_chunks` (visual debt, inconsistency)
-- `bugs` (broken elements, obvious failures)
+Pools are picked from deterministically by PC2/PC3 quadrants — same URL
+always gets the same garnish. Barista should fall back gracefully on any
+unknown value (`(string & {})` in the TS type).
+
+**Positive — primary fruit (modern: bright, dated: classic)**
+- bright (`pc3 ≥ 0`): `mango_cube` `raspberry` `kiwi_slice` `passionfruit`
+- classic (`pc3 < 0`): `strawberry_chunk` `blueberry` `cherry` `peach_slice`
+
+**Positive — secondary kicker (only when `pc1 ≥ 0.5`)**
+- premium (`pc3 ≥ 0`): `coconut_flake` `caramel_drizzle` `mint`
+- soft (`pc3 < 0`): `sprinkles` `honey_drop` `sparkles`
+
+**Negative — gunk garnish (visceral when `pc1 < −0.5`, else stale)**
+- visceral: `mold` `fish_bone` `rotten_banana` `soggy_crouton`
+- stale: `eggshell` `stale_chip` `cold_pea` `wilted_lettuce`
 
 ## `Ingredients.toppings[].kind`
+
 **Positive**
-- `whipped_cream` (premium finish)
+- `whipped_cream` `honey_glaze` `fresh_cream_dollop`
 
 **Negative**
-- `lint_dust` (grime, outdated)
-- `burnt_marshmallow` (overcooked styling, harsh contrast)
+- `lint_dust` `burnt_marshmallow` `mystery_sauce` `cigarette_ash`
 
 ## Notes on extensibility
 - Additions are allowed, but should be coordinated:
